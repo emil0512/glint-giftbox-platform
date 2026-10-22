@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}GLINT - Register{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <aside class="auth-panel auth-panel--brand">
+        <div class="auth-panel__badge">GLINT</div>
+        <h1>Start gifting beautifully</h1>
+        <p>Create a profile and begin designing memorable gift boxes for every milestone.</p>
+
+        <ul class="auth-panel__list">
+            <li><i class="fa-solid fa-check"></i> Build custom gift experiences</li>
+            <li><i class="fa-solid fa-check"></i> Save thoughtful drafts and ideas</li>
+            <li><i class="fa-solid fa-check"></i> Track orders with complete clarity</li>
+        </ul>
+    </aside>
+
+    <div class="auth-panel auth-panel--form">
+        <div class="card auth-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="auth-card-header text-center mb-4">
+                    <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <h2>Create account</h2>
+                    <p>Join the GLINT experience</p>
+                </div>
+
+                <form method="POST" action="{% url 'register' %}" id="registerForm" class="auth-form">
+                    {% csrf_token %}
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger small mb-3">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div>• {{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Full name</label>
+                        {{ form.full_name }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email address</label>
+                        {{ form.email }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        {{ form.password }}
+                        <small class="text-muted d-block mt-2 auth-help">
+                            Use 8+ characters with uppercase, lowercase, number, and special symbol.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password_confirm" class="form-label">Confirm password</label>
+                        {{ form.password_confirm }}
+                    </div>
+
+                    <div class="mb-3 form-check auth-check">
+                        {{ form.terms_agreed }}
+                        <label class="form-check-label small" for="id_terms_agreed">
+                            I agree to the <a href="#" class="auth-link">Terms of Service</a> and <a href="#" class="auth-link">Privacy Policy</a>.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fa-solid fa-user-plus me-1"></i> Create account
+                    </button>
+
+                    <p class="text-center small auth-footer">
+                        Already registered? <a href="{% url 'login' %}{% if next %}?next={{ next }}{% endif %}">Login here</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,680 @@
+GLINT : PERSONALIZED GIFT COLLECTION 
+ 
+This project involves the development of a single-product e-commerce platform focused 
+on personalized gifting. Unlike conventional e-commerce sites that offer fixed, 
+pre-assembled products, this platform enables users to construct a customized gift box 
+tailored to the recipient and the occasion.Users may add or remove items from a 
+selected gift box, apply personalized text such as names, quotes, or messages, and 
+view real-time price updates based on their choices. The platform also includes cart 
+management, secure checkout, and payment processing. 
+ 
+1.​ INTRODUCTION 
+ 
+1.1. PURPOSE 
+ 
+The purpose of this project is to develop an interactive e-commerce platform that 
+enables users to create fully personalized gift boxes. The system allows users to 
+select a gift box based on an occasion, customize its contents by adding or 
+removing items, personalize it with names or messages, and complete the 
+purchase through a secure checkout process. The platform aims to provide a 
+transparent, user-centric gifting experience where pricing adjusts dynamically 
+based on user choices.​
+​
+ 
+ 
+1.2. DOCUMENT CONVENTION 
+ 
+This document is structured according to standard Software Requirements 
+Specification 
+(SRS) 
+formatting, 
+following 
+IEEE 
+guidelines. 
+Within this 
+specification, the term "Must" or "Shall" denotes a mandatory requirement that 
+must 
+be implemented, while "Should" indicates a recommended but 
+non‑mandatory feature. Key terms are defined as follows: a "Gift Box" refers to a 
+curated collection of physical items presented in a single package; an "Event" is 
+a predefined occasion that determines which gift boxes are displayed to users; 
+"Customization" describes the act of adding, removing, or personalizing items 
+within a gift box; and "Base Price" is defined as the standard cost of a gift box 
+with its default set of items. 
+ 
+1.3. INTENDED AUDIENCE AND READING SUGGESTIONS 
+ 
+This document is intended for four primary audiences: project developers, who 
+will rely on it to understand the functional and technical requirements; project 
+managers, who will use it for project planning and scope management; the 
+quality assurance team, for test case design and validation; and stakeholders, to 
+review overall project objectives and deliverables. To help each group navigate 
+the material efficiently, the following reading suggestions are provided: technical 
+team members should focus on sections 3 through 5, project managers are 
+advised to review sections 1 and 2, and stakeholders are recommended to read 
+the introduction and the overall description sections for a high‑level overview. 
+ 
+1.4. PROJECT SCOPE 
+ 
+The scope of this project encompasses user registration, authentication, and 
+profile management; the display of gift boxes filtered by user-selected events; 
+real-time customization of gift boxes including adding or removing items and 
+adding personalized text with dynamic price recalculation based on those 
+customizations; shopping cart management and order checkout; and payment 
+gateway integration for transaction processing. However, this project is limited to 
+a web-based platform and explicitly does not include a mobile application or a 
+physical inventory management system. 
+ 
+1.5. REFERENCES 
+ 
+The following documents and resources are referenced in this SRS: 
+●​ Python Django Official Documentation (v4.2+) 
+●​ Bootstrap Framework Documentation 
+●​ Payment Gateway (e.g., Stripe, PayPal) API Documentation 
+●​ OWASP Security Guidelines for Web Applications 
+●​ W3C Web Content Accessibility Guidelines (WCAG) 2.1 
+ 
+2.​ OVERALL DESCRIPTION 
+ 
+2.1. PRODUCT PERSPECTIVE 
+ 
+This system is a standalone web application built using the Python Django 
+framework, operating as a new, self-contained product that does not replace or 
+interface with any existing systems. The application interacts with several 
+external components: a PostgreSQL or MySQL database for persistent storage 
+of user data, product inventory, order history, and customization details; the file 
+system to store user-uploaded images or text files such as custom letters as part 
+of the gift box customization; an external payment gateway to process financial 
+transactions securely; and an email service to send order confirmations and 
+notifications. The system is accessed via standard web browsers and is hosted 
+on a cloud platform.  
+ 
+2.2. PRODUCT FEATURES 
+ 
+The key features of the platform are: 
+ 
+User Authentication 
+User authentication encompasses secure registration and login functionality, 
+along with password encryption and recovery mechanisms to ensure account 
+security and user access management. 
+ 
+Event-Based Browsing 
+Event-based browsing allows users to browse gift recommendations by selecting 
+a specific occasion such as Birthday, Anniversary, or Valentine's Day and in 
+response, the system presents a curated selection of items that are specifically 
+suggested for that chosen event. 
+ 
+Gift Box Customization 
+Gift box customization is facilitated through an interactive, step-by-step builder 
+interface that guides users through the personalization process. Within this 
+interface, users can add items to their gift box, remove unwanted ones, and 
+further personalize the box by including the recipient's name, a custom quote, or 
+a personal letter entered as free text. To support informed decision‑making, the 
+system incorporates real‑time pricing, dynamically calculating and displaying the 
+updated total price as users add or remove items, ensuring full transparency 
+throughout the customization experience. 
+ 
+Shopping Cart 
+The shopping cart functionality allows users to add customized gift boxes to their 
+cart, with the ability to view, edit, or remove any items before proceeding to 
+checkout. Additionally, the system ensures cart persistence across sessions, so 
+that users can return to their shopping cart at a later time without losing their 
+selected items and customizations. 
+ 
+Payment Processing 
+Payment processing includes integration with a secure payment gateway to 
+handle financial transactions, supporting multiple payment methods such as 
+credit and debit cards, UPI, and other commonly used options. Upon successful 
+completion, the system provides transaction confirmation and generates a receipt 
+for the user's records. 
+ 
+Order Management 
+Order management enables users to view their complete order history and track 
+the current status of each order. On the administrative side, the system allows 
+admins to manage orders by performing actions such as marking items as 
+shipped, updating statuses, and handling fulfillment workflows, ensuring efficient 
+oversight of the order lifecycle. 
+ 
+2.3. USER CLASSES AND CHARACTERISTICS 
+ 
+The system defines three primary user classes based on role and authentication 
+status. 
+A Guest User is an unauthenticated visitor who can browse items, view event 
+pages, and use the customization builder, but cannot finalize orders. 
+A Registered Customer is an authenticated user with an account, who enjoys full 
+purchasing capabilities including saving gift boxes, adding items to the cart, 
+completing purchases, viewing order history, and managing their profile.  
+An Admin is an administrative user responsible for platform management, with 
+privileges to manage inventory, view and update orders, handle user accounts, 
+and oversee system operations. 
+ 
+2.4. OPERATING ENVIRONMENT 
+The platform is a web-based application that runs on the server side and is 
+compatible with Windows, macOS, and Linux operating systems. For production 
+deployment, it uses Gunicorn or Nginx as the web server, while the Django 
+development server is used during development. The database is PostgreSQL in 
+production and SQLite in development. The application supports all modern 
+browsers, including Chrome, Firefox, Safari, and Edge, and requires internet 
+connectivity for full functionality. 
+ 
+2.5. DESIGN AND IMPLEMENTATION CONSTRAINTS 
+ 
+The design and implementation of the system are governed by several specific 
+constraints. The technology stack shall be built using Python Django (version 4.2 
+or higher) alongside HTML5, CSS3, and JavaScript, with Bootstrap 5 used as the 
+front-end framework to ensure responsive design. For production, PostgreSQL 
+shall be the designated database, and the system shall integrate with a 
+third-party payment gateway such as Stripe or PayPal. Security measures 
+mandate that all sensitive data including passwords and payment information be 
+encrypted, and HTTPS shall be enforced throughout. Code quality is maintained 
+by following PEP 8 guidelines for all Python code. Additionally, the system must 
+be fully functional across mobile, tablet, and desktop screens, and user sessions 
+shall be managed server-side with secure cookie handling. 
+ 
+2.6. USER DOCUMENTATION 
+ 
+The project will include comprehensive user documentation to support all 
+audiences. A User Manual will provide a step-by-step guide for using the 
+platform, covering everything from registration to checkout. An Admin Manual will 
+detail administrative procedures and system management tasks for platform 
+oversight. Developer Documentation will offer technical documentation to 
+facilitate maintenance, troubleshooting, and future updates. Additionally, the 
+system will feature Online Help in the form of in-app contextual help and tooltips 
+to guide users through specific tasks, alongside an FAQ Section on the website 
+that addresses frequently asked questions for quick reference. 
+ 
+2.7. ASSUMPTIONS AND DEPENDENCIES 
+ 
+The project is built on a set of key assumptions and dependencies that must be 
+in place for successful operation. It assumes that users have reliable internet 
+connectivity, possess basic computer literacy, and hold valid payment methods, 
+while also relying on the availability and proper functioning of payment gateway 
+services, as well as maintained database and server infrastructure. On the 
+dependency side, the system depends on the Django framework and Python 
+runtime environment being available, the database system being operational, the 
+payment gateway API being accessible, email services being reliable for sending 
+notifications, and CDN services being available for serving static files efficiently. 
+ 
+3.​ SYSTEM FEATURES 
+ 
+USER REGISTRATION 
+The User Registration Module serves as the primary entry point for new users to 
+create an account on the Personalized GiftBox Collection Platform, enabling 
+guest users to sign up by providing their Full Name, a valid Email address, and a 
+secure Password with confirmation. The system performs comprehensive input 
+validation, ensuring the email format is correct and the password meets strength 
+requirements of at least 8 characters containing both letters and numbers. Upon 
+submission, the module verifies that the email is not already registered in the 
+database and that both password entries match exactly. All passwords are 
+securely hashed using Django's built-in hashing algorithms such as Argon2 or 
+PBKDF2 before storage, ensuring plaintext passwords are never saved. After 
+successful validation and account creation, the system automatically dispatches 
+a confirmation email to the user's registered address containing a verification link 
+for account activation. The module includes robust error handling mechanisms 
+that display user-friendly messages for common issues like duplicate email 
+addresses, weak passwords, or mismatched entries, guiding users to correct 
+their input without exposing technical system details. The registration flow 
+seamlessly integrates with the login system, allowing new users to proceed 
+directly to authentication once their account is successfully created, and also 
+handles edge cases such as email service unavailability by logging errors and 
+notifying users appropriately while still allowing account creation. 
+ 
+USER LOGIN 
+ 
+The User Login Module provides secure authentication for registered users to 
+access their accounts and utilize the full functionality of the Personalized GiftBox 
+Collection Platform. The module presents a login form requiring users to enter 
+their registered Email address and Password, which are then validated against 
+the stored credentials in the database. The system incorporates robust security 
+measures including password hashing verification, session management with 
+secure cookie handling using HttpOnly and Secure flags, and automatic session 
+timeout after 30 minutes of inactivity to protect user accounts from unauthorized 
+access. To prevent brute force attacks, the module implements an account 
+lockout mechanism that temporarily restricts access after five consecutive failed 
+login attempts, displaying an appropriate error message and directing users to 
+the password reset functionality. Upon successful authentication, the system 
+creates a user session, redirects users to their dashboard or the homepage, and 
+displays personalized content based on their profile. The module also supports a 
+"Remember Me" feature that creates a persistent session cookie for users who 
+wish to stay logged in across browser sessions. For users who have forgotten 
+their credentials, the module provides a seamless integration with the password 
+reset functionality through a "Forgot Password" link. Additionally, the login system 
+includes comprehensive error handling that displays user-friendly messages for 
+invalid credentials, locked accounts, or database connectivity issues, ensuring 
+users understand the reason for authentication failures without exposing 
+sensitive system information, while also maintaining detailed logs for monitoring 
+and security auditing purposes. 
+GIFTBOX CUSTOMIZATION 
+The Gift Box Customization Module serves as the core feature of the 
+Personalized GiftBox Collection Platform, providing users with an interactive 
+step-by-step builder interface to create fully personalized gift boxes tailored to 
+their recipients and occasions. The module guides users through a structured 
+three-step process beginning with item selection, where users can browse 
+available products and add items to their gift box with the ability to specify 
+multiple quantities for each item, and also remove items or adjust quantities as 
+needed while viewing a visual preview of their creation. The system dynamically 
+updates the item list in real-time and calculates the running total as users make 
+changes to their selections. The second step focuses on personalization, 
+requiring users to enter the recipient's name as a mandatory field while providing 
+optional fields for adding custom quotes and personal letters, with all text inputs 
+undergoing validation to ensure appropriate content. The third step presents a 
+comprehensive review screen displaying a complete summary of the gift box 
+including all selected items with quantities and prices, personalization details, 
+and the total cost breakdown. Throughout this process, the module maintains 
+real-time price calculation that instantly updates the total price whenever items 
+are added, removed, or quantities are modified, ensuring complete pricing 
+transparency for users. The module also includes a draft saving functionality that 
+allows users to save incomplete gift boxes for later completion, with registered 
+users having their drafts permanently stored in the database while guest users 
+have drafts stored temporarily in their session. Users can proceed to add their 
+finalized gift box to the shopping cart or continue editing, and the module 
+includes comprehensive validation ensuring that gift boxes contain at least one 
+item and have a recipient name before allowing progression, while also handling 
+exceptions such as session expiry, item unavailability, and validation errors with 
+appropriate user-friendly messages.  
+SHOPPING CART 
+The Shopping Cart Module enables users to aggregate and manage their 
+customized gift boxes before proceeding to checkout, providing a centralized 
+location for reviewing and modifying their selections. Once users finalize their gift 
+box customization, they can add it to the cart with a single click, and the system 
+immediately updates the cart count displayed in the header while storing all gift 
+box details including selected items with quantities, personalization information, 
+pricing breakdown, and customization data. The cart page presents users with a 
+comprehensive list of all gift boxes, each displaying its itemized contents, 
+personalization details, individual price, and the ability to edit or remove specific 
+gift boxes entirely. Users can modify their selections directly from the cart by 
+clicking an edit button that opens the builder interface with the saved state, 
+allowing them to add or remove items, update personalization, and adjust 
+quantities, with all changes automatically reflected in the cart upon saving. The 
+system performs real-time calculations on the cart page, displaying the subtotal 
+for each gift box, applicable taxes, shipping costs if applicable, and the grand 
+total, with all values updating dynamically as users make modifications. For 
+authenticated users, cart contents persist across sessions through database 
+storage, ensuring their selections remain available even after logging out and 
+returning later, while guest users have their cart maintained via session storage, 
+with the system seamlessly merging guest cart contents upon user registration or 
+login. The module also handles edge cases such as displaying appropriate 
+messages when the cart is empty, showing a disabled checkout button, guiding 
+users to continue shopping, and managing situations where items become 
+unavailable by notifying users and automatically removing affected items from 
+the cart. Additionally, the cart module integrates with the checkout system, 
+providing users with a clear path to proceed to payment while maintaining 
+accurate inventory tracking and preventing duplicate additions through prompts 
+asking users whether they want to add another copy or update existing cart 
+items. 
+PAYMENT AND CHECKOUT 
+The Payment and Checkout Module enables authenticated users to securely 
+complete their purchases by processing financial transactions through integrated 
+third-party payment gateways such as Stripe or PayPal. When users click the 
+"Proceed to Checkout" button from their shopping cart, the system first verifies 
+authentication status and redirects guest users to login or registration pages 
+before allowing them to continue. The checkout page displays a comprehensive 
+order summary showing all gift boxes with their items, personalization details, 
+quantities, individual prices, and the complete cost breakdown including subtotal, 
+applicable taxes, and grand total, along with pre-filled shipping address 
+information retrieved from the user's profile for convenience. Users can review 
+their entire order, select their preferred payment method, and confirm their 
+purchase with a single click, at which point the system redirects them to the 
+secure payment gateway interface where they can safely enter their payment 
+credentials without any sensitive financial data being stored on the local server, 
+ensuring full PCI DSS compliance. The module handles payment success 
+callbacks by automatically marking orders as "Paid", generating unique order 
+confirmation numbers, sending detailed confirmation emails to users containing 
+their order summary and tracking information, clearing the user's cart, and 
+displaying a success page with the order details. In cases of payment failure, the 
+system displays appropriate error messages explaining the reason for decline 
+and allows users to retry using alternative payment methods or the same method 
+after correcting any issues. The module implements atomic transaction 
+processing to ensure data integrity by rolling back all changes if any step in the 
+order creation process fails, preventing partial order creation or inconsistent data 
+states. Additionally, the system handles various edge cases including payment 
+gateway timeouts with appropriate user notifications, cart emptiness during 
+checkout attempts, and service unavailability scenarios with graceful error 
+handling and logged exceptions for monitoring purposes, while also supporting 
+multiple currencies based on deployment region requirements. 
+EVENT-BASED BROWSING 
+The Event-Based Browsing Module allows users to explore gift box suggestions 
+organized by occasion or event type, providing context-aware recommendations 
+that streamline the gift selection process. The module displays a list of 
+predefined events such as Birthday, Anniversary, Valentine's Day, Mother's Day, 
+and other special occasions on the homepage with engaging visual cards that 
+capture the theme of each event. When users click on a specific event, the 
+system fetches and displays curated gift boxes associated with that occasion, 
+presenting products in a grid format with images, prices, brief descriptions, and 
+an "Add to Builder" button on each product card to enable quick customization. 
+The module includes filtering capabilities that allow users to refine their browsing 
+experience by product categories such as Chocolates, Flowers, Accessories, and 
+other relevant classifications, with the system updating displayed products 
+instantly as filters are applied or removed. Users can click on individual products 
+to view detailed information including comprehensive descriptions, image 
+galleries, availability status, and pricing, which helps them make informed 
+decisions about which items to include in their customized gift boxes. The 
+event-based recommendations are fully configurable by administrators, allowing 
+them to associate products with multiple events, create new event categories, 
+remove existing ones, and curate which products appear under each occasion to 
+ensure relevance and seasonal appropriateness. The module also handles 
+scenarios where no products are available for a particular event by displaying 
+appropriate user-friendly messages and suggesting alternative occasions, while 
+maintaining fast response times through optimized database queries with proper 
+indexing for sub-100ms read operations even with extensive product catalogs. 
+Additionally, the browsing interface is designed responsively to work seamlessly 
+across desktop, tablet, and mobile devices, ensuring a consistent experience 
+regardless of the device used to access the platform, and integrates smoothly 
+with the gift box builder so users can seamlessly transition from browsing to 
+customization. 
+ADMIN-PRODUCT MANAGEMENT 
+The Admin Product Management Module provides administrators with 
+comprehensive control over the platform's product inventory, enabling them to 
+add, edit, and delete product items as well as manage all associated product 
+data. Through the admin dashboard, administrators can create new products by 
+filling in detailed information including product name, description, price, stock 
+quantity, and assigning products to multiple categories, while uploading product 
+images with validation ensuring images are optimized for web display and under 
+5MB in size. The module allows administrators to edit existing products by 
+updating any field including changing prices, modifying descriptions, updating 
+stock quantities, adding or removing images from the product gallery, and 
+reassigning category associations, with all changes validated and saved to the 
+database upon confirmation. Products can be deleted from the system with a 
+confirmation step to prevent accidental removal, and when products are deleted, 
+the system handles dependencies by checking for existing associations with 
+orders or active cart items before proceeding. The product management interface 
+includes search and filter functionality that enables administrators to quickly 
+locate specific products by name, category, price range, or stock status, and 
+supports sorting options for efficient inventory management across potentially 
+large product catalogs. The module also implements validation rules ensuring 
+product prices are positive numbers, product names are unique to prevent 
+duplicates, and all required fields are completed before allowing product creation, 
+with user-friendly error messages displayed for any validation failures. 
+Additionally, administrators can manage product visibility by enabling or disabling 
+products without deleting them, useful for seasonal items or temporary 
+unavailability, and the system maintains audit logs of all product management 
+actions for accountability and tracking purposes, while the module integrates 
+seamlessly with the event-based browsing system to ensure products are 
+properly categorized and displayed to users based on selected occasions. 
+ADMIN-ORDER MANAGEMENT 
+The Admin Order Management Module enables administrators to view, process, 
+and manage all customer orders placed on the Personalized GiftBox Collection 
+Platform through a comprehensive dashboard interface. The module presents a 
+complete list of all orders displaying essential information including order ID, 
+customer name, order date, total amount, and current status, with filtering 
+capabilities that allow administrators to sort orders by status categories such as 
+Pending, Paid, Shipped, and Completed, as well as filter by date ranges to view 
+orders from specific periods. Administrators can click on any order to access 
+detailed information including the complete order breakdown with itemized 
+product lists showing quantities and prices, customer personalization details such 
+as recipient names and custom messages, shipping addresses, payment 
+confirmation details, and order history logs. The module provides functionality to 
+update order statuses through a workflow that guides orders from Pending to 
+Paid to Shipped to Completed, with each status change triggering automated 
+email notifications to customers informing them of their order progress and 
+including relevant tracking information when applicable. When orders need to be 
+cancelled, administrators can initiate the cancellation process with confirmation 
+steps, and the system automatically handles refund processing when payments 
+have already been completed. The module includes additional features such as 
+adding internal notes to orders for team communication, printing order invoices 
+and packing slips for fulfillment, and managing bulk status updates for processing 
+multiple orders efficiently during peak periods. Comprehensive search 
+functionality enables administrators to quickly locate specific orders by order ID, 
+customer email, or customer name, and the module integrates with inventory 
+management by automatically updating stock quantities when orders are 
+confirmed. The interface also provides dashboard statistics showing order 
+volumes by status, helping administrators identify bottlenecks and manage 
+fulfillment workflows effectively, while maintaining detailed audit logs of all order 
+management actions including who made changes and when, ensuring 
+accountability and traceability for all order processing activities. Additionally, the 
+module handles edge cases such as displaying appropriate messages when no 
+orders match the applied filters, managing incomplete order data gracefully, and 
+providing error handling for update failures with user-friendly messages and retry 
+options. 
+ORDER HISTORY 
+The Order History Module enables registered customers to view and track all 
+their past purchases made on the Personalized GiftBox Collection Platform 
+through a dedicated dashboard section. When users navigate to their order 
+history, the system retrieves and displays a comprehensive list of all orders 
+associated with their account, showing key information for each order including 
+the unique order number, date placed, total amount paid, and current status with 
+visual indicators such as Pending, Paid, Shipped, or Completed. Users can click 
+on any order to access a detailed view that presents the complete order 
+breakdown 
+including 
+all 
+items 
+with 
+quantities 
+and 
+individual 
+prices, 
+personalization details such as recipient names and custom messages, shipping 
+address information, payment confirmation details, and any tracking numbers or 
+shipment updates provided by the admin. The module includes filtering and 
+sorting capabilities that allow users to search for specific orders by date ranges 
+or status, making it easy to locate particular purchases among multiple orders. 
+For orders that are still in progress, users can monitor the status changes in 
+real-time as administrators update the order through the fulfillment process, 
+providing transparency and peace of mind about their purchase status. The 
+module also includes functionality for users to reorder previous gift boxes by 
+clicking a convenient reorder button that automatically loads the items and 
+personalization details from their past order into the gift box builder, allowing 
+them to quickly recreate similar gifts for other occasions or repeat purchases. 
+Users can print order receipts and order summaries directly from the detailed 
+view page, which is useful for expense tracking, gift records, or returns. 
+Additionally, if the platform supports order cancellation policies, the module 
+provides appropriate actions for cancelling eligible orders with clear confirmation 
+dialogs and notifications about refund processing when applicable. The system 
+also handles scenarios where users have no orders by displaying a friendly 
+message encouraging them to start shopping, while maintaining fast response 
+times through optimized database queries and implementing proper security 
+measures to ensure users can only view and access their own order data, 
+protecting sensitive order information from unauthorized access. 
+SAVED DRAFTS 
+The Saved Drafts Module enables users to save incomplete gift box 
+customizations for later completion, providing flexibility and convenience in the 
+gift creation process. When users are in the Gift Box Builder and need to pause 
+their customization, they can click the "Save Draft" button, and the system stores 
+the current state including all selected items with quantities, personalization 
+details such as recipient name, quotes, and messages, and pricing information, 
+creating a snapshot of their progress. Registered users have their drafts 
+permanently stored in the database, allowing them to access their saved drafts 
+from any device across multiple sessions, while guest users have drafts 
+maintained temporarily in their session storage, and the system prompts them to 
+register when attempting to save drafts permanently. Users can access their 
+saved drafts through a dedicated section in their dashboard or profile area, 
+where the system presents a list of all saved drafts displaying essential 
+information such as the draft name or creation date, the number of items in the 
+box, and the last modified timestamp, with sorting options to organize drafts by 
+date or name. From the drafts list, users can click on any draft to load it directly 
+into the gift box builder, resuming customization exactly where they left off with all 
+selections and personalization intact, and they can complete the gift box, save 
+further changes, or delete drafts that are no longer needed. The module also 
+allows users to rename drafts for better organization, making it easier to manage 
+multiple drafts created for different recipients or occasions. The system includes 
+a draft retention policy ensuring drafts are recoverable for at least 30 days, with 
+automatic cleanup of abandoned drafts to maintain database efficiency, and 
+handles edge cases such as session expiry warnings prompting users to save 
+their work before proceeding. Additionally, when items within a saved draft 
+become unavailable or out of stock, the system displays appropriate notifications 
+to users upon loading the draft, informing them about the unavailability and 
+allowing them to make alternative selections, ensuring the customization process 
+remains smooth and transparent. The module integrates seamlessly with the 
+authentication system, so when guest users who have temporary drafts finally 
+register or log in, the system intelligently migrates their session-based drafts to 
+their new permanent account, ensuring no progress is lost during the transition 
+from guest to registered user, thereby enhancing the overall user experience and 
+encouraging account creation without disrupting the customization workflow. 
+ADMIN ANALYTICS 
+The Admin Analytics Module provides administrators with comprehensive 
+insights and performance metrics about the Personalized GiftBox Collection 
+Platform through an interactive dashboard that displays real-time and historical 
+data. The module presents key performance indicators including total orders 
+placed, total revenue generated, user registration trends, and average order 
+value, all displayed through visually appealing charts and graphs that make data 
+interpretation intuitive and actionable. Administrators can filter analytics by 
+custom date ranges such as daily, weekly, monthly, or yearly periods to analyze 
+trends over time and identify seasonal patterns in purchasing behavior. The 
+module includes product performance analytics showing the most popular gift 
+box items, best-selling categories, and inventory turnover rates, helping 
+administrators make informed decisions about product stocking and marketing 
+strategies. Order analytics provide insights into order volume trends, peak 
+ordering times, geographic distribution of customers, and conversion rates from 
+browsing to purchase, enabling administrators to optimize the user experience 
+and identify potential bottlenecks in the sales funnel. The dashboard also tracks 
+user behavior metrics such as registration rates, cart abandonment rates, and 
+the popularity of different event categories, offering valuable feedback on 
+platform usability and customer preferences. Administrators can export analytics 
+data in various formats including CSV, PDF, or Excel for further analysis, 
+reporting, 
+or 
+presentation 
+to 
+stakeholders, 
+supporting 
+data-driven 
+decision-making and strategic planning. The module displays revenue 
+breakdowns by different product categories and events, helping identify which 
+segments generate the most income and which may require promotional efforts 
+to boost sales. Additionally, the analytics system is designed for performance 
+efficiency with data cached appropriately to ensure fast loading times even when 
+processing large datasets, and the module maintains historical data for trend 
+comparison, allowing administrators to benchmark current performance against 
+past periods and track the impact of platform changes or marketing campaigns. 
+The analytics dashboard also includes alerts and notifications for significant 
+changes in metrics such as sudden drops in conversion rates or unusual order 
+volumes, enabling administrators to quickly investigate and address potential 
+issues that could impact business performance or user satisfaction. 
+ 
+4.​ EXTENDED INTERFACE REQUIREMENTS 
+4.1. USER INTERFACES 
+The user interface design centers on a responsive web interface that shall be 
+compatible with all modern browsers and devices, including desktop, tablet, and 
+mobile. The design language employs a clean, minimalistic aesthetic with 
+intuitive navigation, using warm and inviting primary colors to reflect the gifting 
+theme. The homepage shall display event categories with engaging visuals to 
+guide browsing. The builder interface follows a step-by-step wizard featuring a 
+progress indicator which includes Step 1: Select Items, Step 2: Personalize, Step 
+3: Review alongside a visual preview of the gift box and real‑time price display. 
+The cart page shall show a summarized list of items, including customization 
+details and the total price, while the checkout page includes a payment button 
+with a secure redirect. The user dashboard displays order history, profile settings, 
+and saved drafts, and the admin dashboard uses a custom panel with full CRUD 
+interfaces for managing products, categories, orders, and users. 
+ 
+4.2. HARDWARE INTERFACES 
+The system is designed to operate on standard server hardware, specifically 
+cloud-based infrastructure with a minimum configuration of 2 vCPUs, 8 GB of 
+RAM, and 50 GB of storage. On the client side, the application shall be 
+accessible via standard devices such as PCs, laptops, tablets, or smartphones, 
+all equipped with a modern browser and an active internet connection. 
+Importantly, no specialized hardware interfaces are required, ensuring broad 
+accessibility and ease of deployment. 
+ 
+4.3. SOFTWARE INTERFACES 
+ 
+The system interfaces with several external software components, each serving 
+a distinct purpose and using a specific protocol. The PostgreSQL database 
+handles the storage and retrieval of all application data including users, products, 
+orders, and customizations—via SQL through the Django ORM. The payment 
+gateway (Stripe or PayPal) processes financial transactions through a REST API 
+secured over HTTPS. The email service uses the SMTP protocol to send order 
+confirmations, password reset emails, and other notifications. For file storage, the 
+system stores user-uploaded images and text files either on the local filesystem 
+or via AWS S3. Finally, the web browser renders the front-end interface and 
+communicates with the application using standard HTTP or HTTPS protocols. 
+ 
+4.4. COMMUNICATION INTERFACES 
+All communication between the client and the server shall be conducted over 
+HTTPS to ensure data security, with RESTful endpoints used for interacting with 
+the payment gateway and other third-party services. Email communication shall 
+rely on the SMTP protocol, and the application shall run on port 443 for HTTPS 
+traffic, with port 80 optionally available for HTTP redirection as needed. 
+ 
+5.​ OTHER NONFUNCTIONAL REQUIREMENTS 
+ 
+5.1. PERFORMANCE REQUIREMENTS 
+To ensure a smooth and reliable user experience, the system establishes clear 
+performance benchmarks: page load times shall remain under three seconds for 
+95% of all requests, while the platform must support at least 500 concurrent 
+users without performance degradation. During peak traffic, the system shall 
+process a minimum of 100 orders per minute, and it should be designed for 
+horizontal scalability by adding more application servers as demand grows. 
+Additionally, database performance is critical, with all read operations optimized 
+through proper indexing to guarantee sub-100ms response times. 
+ 
+5.2. SAFETY REQUIREMENTS 
+To ensure reliability and data integrity, the system mandates automated database 
+backups on a daily basis, with a comprehensive disaster recovery plan in place 
+to restore full system functionality within four hours of any failure. All financial and 
+data transactions shall be atomic, meaning that in the event of a failure, the 
+system will automatically roll back to its previous consistent state to prevent 
+partial or corrupted updates. Furthermore, error handling shall be user‑friendly, 
+displaying clear and helpful messages without exposing any underlying technical 
+details or stack traces to the end user. 
+ 
+5.3. SECURITY REQUIREMENTS 
+The security requirements for the system are comprehensive and span multiple 
+layers of protection. For authentication, passwords shall be hashed using strong 
+algorithms such as Argon2 or PBKDF2. Session cookies shall be secured with 
+the HttpOnly and Secure flags to prevent client-side script access and ensure 
+transmission only over encrypted channels. In terms of payment security, the 
+system shall comply with PCI DSS standards to safeguard all financial 
+transactions. Input validation is mandatory across all user inputs, with strict 
+sanitization to prevent SQL injection, cross-site scripting (XSS), and cross-site 
+request forgery (CSRF) attacks. Role-based access control (RBAC) shall enforce 
+distinct permissions between admin and regular users, restricting access to 
+sensitive operations accordingly. Additionally, all sensitive user data—including 
+names and addresses shall be encrypted at rest, and the system shall implement 
+essential security headers such as Content Security Policy (CSP), HTTP Strict 
+Transport Security (HSTS), and X-Frame-Options to mitigate common web 
+vulnerabilities. 
+ 
+5.4. SOFTWARE QUALITY ATTRIBUTES 
+The system is designed with a strong emphasis on quality attributes across 
+multiple dimensions. For reliability, it shall achieve 99.9% uptime, excluding any 
+scheduled maintenance windows. Usability is prioritized with an intuitive interface 
+that requires a minimal learning curve, targeting a System Usability Score (SUS) 
+of 80 or higher. Maintainability is ensured by adhering to Django's best practices 
+and PEP 8 guidelines, with comprehensive documentation embedded throughout 
+the codebase. Portability allows deployment on any platform that supports 
+Python and Django, including Linux, macOS, and Windows. Testability is 
+addressed through unit tests covering at least 80% of the backend code, 
+alongside integration tests that cover all critical user flows. Finally, accessibility 
+compliance is mandated by conforming to WCAG 2.1 AA standards to ensure the 
+platform is usable by individuals with disabilities. 
+ 
+6.​ OTHER REQUIREMENTS 
+6.1. Legal and Regulatory Compliance 
+The system shall adhere to all relevant legal and regulatory requirements. For 
+data privacy, it will comply with applicable laws such as the GDPR and CCPA, 
+which includes obtaining explicit user consent for data collection and honoring 
+users' rights to request deletion of their personal data. Payment compliance is 
+addressed by meeting PCI DSS Level 3 requirements for secure handling of 
+financial information. Additionally, a terms of service document shall be clearly 
+presented to users during the registration process to ensure informed consent 
+and legal transparency. 
+6.2. Development Environment 
+The development environment is structured to ensure efficiency, quality, and 
+collaboration. Version control shall be managed using Git, with the repository 
+hosted on a platform such as GitHub or GitLab. A continuous integration and 
+deployment (CI/CD) pipeline shall be established using tools like GitHub Actions 
+or Jenkins to automate testing and deployment processes. For testing, the 
+system shall employ Django's built-in test framework alongside Pytest for both 
+unit and integration tests. All project dependencies shall be explicitly listed in a 
+`requirements.txt` file to facilitate consistent environment setup and dependency 
+management across development and production stages. 
+6.3. Deployment Requirements 
+The deployment requirements specify that the system shall be hosted on a major 
+cloud platform such as AWS, Azure, or Google Cloud to ensure scalability and 
+reliability. All sensitive credentials, including API keys and database passwords, 
+shall be stored securely as environment variables rather than hard-coded in the 
+source code. Additionally, the system shall implement comprehensive logging for 
+debugging and monitoring purposes, with all log data retained for a minimum of 
+30 days to support issue investigation and performance analysis. 
+6.4. Future Enhancements 
+The following features are considered for future releases and are explicitly not 
+part of the current project scope: social media login via OAuth, multi-language 
+support, AI-based gift recommendations, subscription-based gifting services, and 
+native mobile applications for iOS and Android. These enhancements are 
+deferred to later phases to focus on delivering the core functionality within the 
+current release timeline. 
+ 
+ 
+ 

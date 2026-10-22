@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - GLINT{% endblock %}
+
+{% block content %}
+<section class="landing-hero card">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <div class="landing-hero__eyebrow">Thoughtful gifting made joyful</div>
+            <h1 class="landing-hero__heading">A gift box that feels as special as the person receiving it.</h1>
+            <p class="landing-hero__text">Create beautiful pastel surprise boxes for birthdays, anniversaries, baby showers, and everything in between. Curated gifts, personalized notes, and soft styling that feels premium and heartfelt.</p>
+
+            <div class="hero-actions">
+                <a href="{% url 'gift_boxes' %}" class="btn btn-primary">Build your box</a>
+                <a href="{% url 'register' %}" class="btn btn-outline-primary">Create account</a>
+            </div>
+
+            <div class="hero-metrics">
+                <div class="metric-pill">
+                    <strong>4.9/5</strong>
+                    <span>happy gifting</span>
+                </div>
+                <div class="metric-pill">
+                    <strong>1.2k+</strong>
+                    <span>boxes sent</span>
+                </div>
+                <div class="metric-pill">
+                    <strong>24h</strong>
+                    <span>fast delivery</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="gift-showcase">
+                <div class="mini-gift-card mini-gift-card--main" style="background-image: linear-gradient(180deg, rgba(102,55,88,0.25), rgba(110,87,161,0.36)), url('/static/images/giftbox_birthday.svg'); background-size: cover; background-position: center;">
+                    <span class="mini-gift-card__emoji">🎁</span>
+                    <strong>Birthday Box</strong>
+                    <small>Curated with love</small>
+                </div>
+                <div class="mini-gift-card mini-gift-card--two" style="background-image: linear-gradient(180deg, rgba(117,76,127,0.26), rgba(222,177,202,0.32)), url('/static/images/giftbox_anniversary.svg'); background-size: cover; background-position: center;">
+                    <span class="mini-gift-card__emoji">💐</span>
+                    <strong>Anniversary</strong>
+                    <small>Sweet & romantic</small>
+                </div>
+                <div class="mini-gift-card mini-gift-card--three" style="background-image: linear-gradient(180deg, rgba(133,96,124,0.22), rgba(255,196,217,0.26)), url('/static/images/giftbox_celebration.svg'); background-size: cover; background-position: center;">
+                    <span class="mini-gift-card__emoji">🍰</span>
+                    <strong>Celebration</strong>
+                    <small>Bright & joyful</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-strip">
+    <div class="strip-item"><i class="fa-solid fa-shield-heart"></i> Secure checkout</div>
+    <div class="strip-item"><i class="fa-solid fa-sparkles"></i> Gifted with care</div>
+    <div class="strip-item"><i class="fa-solid fa-bag-shopping"></i> Easy cart & checkout</div>
+</section>
+
+<section class="home-section">
+    <div class="section-heading">
+        <div>
+            <span class="section-kicker">Most-loved moments</span>
+            <h2>Choose a moment worth celebrating.</h2>
+        </div>
+        <a href="{% url 'gift_boxes' %}" class="text-link">Browse all</a>
+    </div>
+
+    <div class="moment-grid">
+        {% for occ in occasions|slice:':8' %}
+            <a href="{% url 'gift_boxes_by_event' occ.id %}" class="moment-card">
+                {% if occ.name == 'Anniversary' %}
+                    <div class="moment-card__art moment-card__art--anniversary"><span>💐</span></div>
+                {% elif occ.name == 'Baby Shower' %}
+                    <div class="moment-card__art moment-card__art--baby"><span>🍼</span></div>
+                {% elif occ.name == 'Birthday' %}
+                    <div class="moment-card__art moment-card__art--birthday"><span>🎂</span></div>
+                {% elif occ.name == 'Christmas & Holidays' %}
+                    <div class="moment-card__art moment-card__art--holiday"><span>🎄</span></div>
+                {% elif occ.name == 'Graduation' %}
+                    <div class="moment-card__art moment-card__art--graduation"><span>🎓</span></div>
+                {% elif occ.name == 'Mother\'s Day' %}
+                    <div class="moment-card__art moment-card__art--mothers"><span>🌷</span></div>
+                {% elif occ.name == "Valentine's Day" %}
+                    <div class="moment-card__art moment-card__art--valentine"><span>💖</span></div>
+                {% else %}
+                    <div class="moment-card__art moment-card__art--wedding"><span>💍</span></div>
+                {% endif %}
+                <div class="moment-card__body">
+                    <div class="moment-card__topline">{{ occ.emoji }}</div>
+                    <h3>{{ occ.name }}</h3>
+                    <p>{{ occ.description }}</p>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="home-section home-section--soft">
+    <div class="section-heading">
+        <div>
+            <span class="section-kicker">Top picks</span>
+            <h2>Best-selling gift boxes our customers adore.</h2>
+        </div>
+    </div>
+
+    <div class="popular-grid">
+        {% for box in featured_boxes|slice:':4' %}
+            <article class="popular-card">
+                {% if box.name == 'Anniversary Love & Romance' %}
+                    <div class="popular-card__art popular-card__art--romance"><span>💌</span></div>
+                {% elif box.name == 'Baby Shower Little Angel' %}
+                    <div class="popular-card__art popular-card__art--baby"><span>🧸</span></div>
+                {% elif box.name == 'Birthday Bliss Box' %}
+                    <div class="popular-card__art popular-card__art--birthday"><span>🎉</span></div>
+                {% else %}
+                    <div class="popular-card__art popular-card__art--celebration"><span>🎁</span></div>
+                {% endif %}
+                <div class="popular-card__badge">{{ box.emoji }}</div>
+                <div class="popular-card__content">
+                    <h3>{{ box.name }}</h3>
+                    <p>{{ box.description|truncatewords:12 }}</p>
+                    <div class="popular-card__footer">
+                        <span class="price-tag">₹{{ box.base_price }}</span>
+                        <a href="{% url 'customizer_builder' box.id %}" class="small-btn">Customize</a>
+                    </div>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="home-section">
+    <div class="section-heading center">
+        <div>
+            <span class="section-kicker">How it works</span>
+            <h2>Simple, beautiful, and joyful from start to finish.</h2>
+        </div>
+    </div>
+
+    <div class="process-grid">
+        <div class="process-card">
+            <div class="process-card__number">01</div>
+            <h3>Select</h3>
+            <p>Choose the perfect mix of sweet treats, keepsakes, and extras that match the moment.</p>
+        </div>
+        <div class="process-card">
+            <div class="process-card__number">02</div>
+            <h3>Personalize</h3>
+            <p>Add a handwritten note, names, and thoughtful touches that make it truly yours.</p>
+        </div>
+        <div class="process-card">
+            <div class="process-card__number">03</div>
+            <h3>Ship</h3>
+            <p>Review the final box, confirm your order, and let us handle the rest.</p>
+        </div>
+    </div>
+</section>
+
+<section class="home-cta">
+    <div>
+        <span class="section-kicker">Ready when you are</span>
+        <h2>Make their day feel extra special.</h2>
+    </div>
+    <div class="cta-buttons">
+        <a href="{% url 'gift_boxes' %}" class="btn btn-primary">Build your box</a>
+        <a href="{% url 'register' %}" class="btn btn-outline-primary">Join now</a>
+    </div>
+</section>
+{% endblock %}

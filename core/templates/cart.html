@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}GLINT - Shopping Cart{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Shopping Cart</h1>
+    </div>
+</div>
+
+{% if cart_items %}
+    <div class="row g-4">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Gift Box</th>
+                            <th>Items</th>
+                            <th>Personalization</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                        <tr>
+                            <td>
+                                <h6 class="mb-0">{{ item.gift_box.emoji }} {{ item.gift_box.name }}</h6>
+                                <small class="text-muted">{{ item.gift_box.event.name }}</small>
+                            </td>
+                            <td>
+                                {% for s_item in item.selections.all %}
+                                    <span class="badge bg-light text-dark border me-1 mb-1">
+                                        {{ s_item.item_name }} ({{ s_item.quantity }}x)
+                                    </span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <p class="mb-0 small"><b>To:</b> {{ item.personalization_name }}</p>
+                                {% if item.personalization_message %}
+                                    <p class="mb-0 small text-muted fst-italic">"{{ item.personalization_message|truncatewords:10 }}"</p>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <form method="POST" action="{% url 'update_cart_quantity' item.id 'decrease' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">-</button>
+                                    </form>
+                                    <span class="fw-bold px-2">{{ item.quantity }}</span>
+                                    <form method="POST" action="{% url 'update_cart_quantity' item.id 'increase' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td>
+                                <small class="text-muted d-block">₹{{ item.unit_price }} each</small>
+                                <strong>₹{{ item.total_price }}</strong>
+                            </td>
+                            <td>
+                                <a href="{% url 'customizer_builder' item.gift_box.id %}?edit_cart={{ item.id }}" class="btn btn-sm btn-outline-primary mb-1">Edit</a>
+                                <form method="POST" action="{% url 'remove_from_cart' item.id %}" class="d-inline" onsubmit="return confirm('Remove this item?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <a href="{% url 'gift_boxes' %}" class="btn btn-outline-secondary">Continue Shopping</a>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Order Summary</h4>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-bold">₹{{ subtotal }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tax (5% GST)</span>
+                        <span class="fw-bold">₹{{ tax_amount }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Shipping</span>
+                        <span class="fw-bold {% if shipping_amount == 0 %}text-success{% endif %}">
+                            {% if shipping_amount == 0 %}FREE{% else %}₹{{ shipping_amount }}{% endif %}
+                        </span>
+                    </div>
+
+                    {% if subtotal < free_shipping_threshold %}
+                        <div class="alert alert-info py-2 small mb-3">
+                            Add ₹{{ free_shipping_threshold|floatformat:2 }} or more for <b>FREE Shipping</b>!
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success py-2 small mb-3">
+                            You qualify for <b>FREE Delivery</b>!
+                        </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold fs-5">Grand Total</span>
+                        <span class="fw-bold fs-4">₹{{ grand_total }}</span>
+                    </div>
+
+                    <a href="{% url 'checkout' %}" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-lock me-1"></i> Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center py-5">
+        <h4>Your cart is empty</h4>
+        <p>Start shopping to add gift boxes to your cart.</p>
+        <a href="{% url 'gift_boxes' %}" class="btn btn-primary mt-3">Start Shopping</a>
+    </div>
+{% endif %}
+{% endblock %}

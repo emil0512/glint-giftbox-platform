@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Glint Personalized Gifts{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold brand-font mb-2">Secure Checkout 💳</h1>
+        <p class="text-muted">Enter delivery details and select your preferred payment method</p>
+    </div>
+
+    <form method="POST" action="{% url 'checkout' %}">
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                Please correct the following checkout details: {{ form.errors }}
+            </div>
+        {% endif %}
+        <div class="row g-4">
+            <!-- Left: Shipping & Payment Details -->
+            <div class="col-lg-7">
+                <!-- Shipping Address Card -->
+                <div class="glint-card p-4 mb-4">
+                    <h4 class="fw-bold mb-3"><i class="fa-solid fa-location-dot text-primary me-2"></i> 1. Shipping & Delivery Address</h4>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Full Name <span class="text-danger">*</span></label>
+                            {{ form.full_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Email Address <span class="text-danger">*</span></label>
+                            {{ form.email }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Phone Number <span class="text-danger">*</span></label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Preferred Delivery Date (Optional)</label>
+                            {{ form.delivery_date }}
+                            {{ form.delivery_date.errors }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Street Address / Apartment / Landmark <span class="text-danger">*</span></label>
+                            {{ form.shipping_address }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">City <span class="text-danger">*</span></label>
+                            {{ form.city }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">State <span class="text-danger">*</span></label>
+                            {{ form.state }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Postal / PIN Code <span class="text-danger">*</span></label>
+                            {{ form.postal_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Selection Card -->
+                <div class="glint-card p-4">
+                    <h4 class="fw-bold mb-3"><i class="fa-solid fa-credit-card text-primary me-2"></i> 2. Payment Method</h4>
+                    <div class="alert alert-warning small">Demo only: these choices do not connect to a payment provider or collect payment details.</div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <label class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-white" style="cursor: pointer;">
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="radio" name="payment_method" value="card" class="form-check-input" checked>
+                                <div>
+                                    <span class="fw-bold d-block">Card payment simulation</span>
+                                    <small class="text-muted">Choose this to test a simulated card checkout</small>
+                                </div>
+                            </div>
+                            <span class="fs-4 text-primary"><i class="fa-solid fa-credit-card"></i></span>
+                        </label>
+
+                        <label class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-white" style="cursor: pointer;">
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="radio" name="payment_method" value="upi" class="form-check-input">
+                                <div>
+                                    <span class="fw-bold d-block">UPI payment simulation</span>
+                                    <small class="text-muted">No QR code, UPI ID, or transfer is used</small>
+                                </div>
+                            </div>
+                            <span class="fs-4 text-success"><i class="fa-brands fa-google-pay"></i></span>
+                        </label>
+
+                        <label class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-white" style="cursor: pointer;">
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="radio" name="payment_method" value="netbanking" class="form-check-input">
+                                <div>
+                                    <span class="fw-bold d-block">Net banking simulation</span>
+                                    <small class="text-muted">No bank portal is contacted</small>
+                                </div>
+                            </div>
+                            <span class="fs-4 text-info"><i class="fa-solid fa-building-columns"></i></span>
+                        </label>
+
+                        <label class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-white" style="cursor: pointer;">
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="radio" name="payment_method" value="cod" class="form-check-input">
+                                <div>
+                                    <span class="fw-bold d-block">Cash on Delivery order simulation</span>
+                                    <small class="text-muted">No payment is collected by this demo application</small>
+                                </div>
+                            </div>
+                            <span class="fs-4 text-warning"><i class="fa-solid fa-money-bill-wave"></i></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Itemized Summary & Submit -->
+            <div class="col-lg-5">
+                <div class="glint-card p-4 sticky-top" style="top: 100px;">
+                    <h4 class="fw-bold mb-3">Order Summary</h4>
+
+                    <div class="mb-3">
+                        {% for item in cart_items %}
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <span class="fw-bold d-block">{{ item.quantity }}x {{ item.gift_box.name }}</span>
+                                    <small class="text-muted">To: {{ item.personalization_name }} ({{ item.selections.count }} items)</small>
+                                </div>
+                                <span class="fw-bold text-dark">₹{{ item.total_price }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Subtotal</span>
+                        <span class="fw-bold text-dark">₹{{ subtotal }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">GST Tax (5%)</span>
+                        <span class="fw-bold text-dark">₹{{ tax_amount }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Shipping Charges</span>
+                        <span class="fw-bold {% if shipping_amount == 0 %}text-success{% else %}text-dark{% endif %}">
+                            {% if shipping_amount == 0 %}FREE{% else %}₹{{ shipping_amount }}{% endif %}
+                        </span>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bold fs-5">Grand Total</span>
+                        <span class="price-tag fs-3">₹{{ grand_total }}</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-glint-primary btn-lg w-100 py-3">
+                        <i class="fa-solid fa-lock me-2"></i> Review & Make Payment
+                    </button>
+
+                    <div class="mt-3 text-center small text-muted">
+                        <a href="{% url 'cart' %}" class="text-decoration-none text-muted">
+                            <i class="fa-solid fa-arrow-left me-1"></i> Return to Cart
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

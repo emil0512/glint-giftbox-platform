@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}GLINT - Login{% endblock %}
+
+{% block content %}
+<div class="auth-shell">
+    <aside class="auth-panel auth-panel--brand">
+        <div class="auth-panel__badge">GLINT</div>
+        <h1>Welcome back</h1>
+        <p>Continue creating thoughtful gift experiences for the people who matter most.</p>
+
+        <ul class="auth-panel__list">
+            <li><i class="fa-solid fa-check"></i> Personalized gift planning</li>
+            <li><i class="fa-solid fa-check"></i> Curated premium collections</li>
+            <li><i class="fa-solid fa-check"></i> Easy order tracking and draft saves</li>
+        </ul>
+    </aside>
+
+    <div class="auth-panel auth-panel--form">
+        <div class="card auth-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="auth-card-header text-center mb-4">
+                    <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
+                    <h2>Sign in</h2>
+                    <p>Access your gifting dashboard</p>
+                </div>
+
+                <form method="POST" action="{% url 'login' %}" id="loginForm" class="auth-form">
+                    {% csrf_token %}
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger small mb-3">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div>• {{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username or email</label>
+                        {{ form.username_or_email }}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="password" class="form-label mb-0">Password</label>
+                            <a href="{% url 'forgot_password' %}" class="small auth-link">Forgot password?</a>
+                        </div>
+                        {{ form.password }}
+                    </div>
+
+                    <div class="mb-3 form-check auth-check">
+                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" checked>
+                        <label class="form-check-label small" for="remember_me">Remember me</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign in
+                    </button>
+
+                    <p class="text-center small auth-footer">
+                        Need an account? <a href="{% url 'register' %}{% if next %}?next={{ next }}{% endif %}">Create one</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

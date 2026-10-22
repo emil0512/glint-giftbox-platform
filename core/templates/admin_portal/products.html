@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Product & Inventory Management - Glint Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-5">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="admin-sidebar sticky-top" style="top: 90px;">
+                <div class="text-center pb-3 border-bottom mb-3">
+                    <span class="badge bg-glint-gold text-dark fw-bold px-3 py-1 rounded-pill small mb-1">Glint Admin Suite</span>
+                    <h5 class="fw-bold mb-0 text-dark">Portal Menu</h5>
+                </div>
+
+                <nav class="d-flex flex-column">
+                    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-chart-line text-primary"></i> Dashboard & KPIs
+                    </a>
+                    <a href="{% url 'admin_products' %}" class="admin-nav-item active text-decoration-none">
+                        <i class="fa-solid fa-boxes-stacked text-primary"></i> Products & Stock
+                    </a>
+                    <a href="{% url 'admin_orders' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-clipboard-list text-primary"></i> Order Processing
+                    </a>
+                    <a href="{% url 'admin_export_orders' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-file-csv text-success"></i> Export CSV Report
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Product Management Content -->
+        <div class="col-lg-9 col-xl-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h1 class="display-6 fw-bold brand-font mb-0">Product & Inventory Management 📦</h1>
+                    <p class="text-muted small mb-0">Manage gift box templates, prices, stock quantities, and customizable items</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_box_create' %}" class="btn btn-sm btn-glint-primary">
+                        <i class="fa-solid fa-plus me-1"></i> Add Gift Box
+                    </a>
+                    <a href="{% url 'admin_box_item_create' %}" class="btn btn-sm btn-glint-outline">
+                        <i class="fa-solid fa-plus me-1"></i> Add Box Item
+                    </a>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="glint-card p-3 mb-4">
+                <form method="GET" action="{% url 'admin_products' %}" class="row g-2">
+                    <div class="col-md-3">
+                        <input type="text" name="q" value="{{ query }}" class="form-control form-control-custom" placeholder="Search gift boxes or items by name, description, category...">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="category" class="form-select">
+                            <option value="">All categories</option>
+                            {% for category in categories %}
+                                <option value="{{ category.name }}" {% if category_filter == category.name %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <input type="number" min="0" step="0.01" name="min_price" value="{{ min_price }}" class="form-control" placeholder="Min ₹" aria-label="Minimum price">
+                    </div>
+                    <div class="col-md-1">
+                        <input type="number" min="0" step="0.01" name="max_price" value="{{ max_price }}" class="form-control" placeholder="Max ₹" aria-label="Maximum price">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="stock" class="form-select">
+                            <option value="">Any stock</option>
+                            <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>Out of stock</option>
+                            <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>Low stock</option>
+                            <option value="available" {% if stock_filter == 'available' %}selected{% endif %}>In stock</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <select name="sort" class="form-select" aria-label="Sort products">
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>A–Z</option>
+                            <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>₹↑</option>
+                            <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>₹↓</option>
+                            <option value="stock_low" {% if sort_by == 'stock_low' %}selected{% endif %}>Stock ↑</option>
+                            <option value="stock_high" {% if sort_by == 'stock_high' %}selected{% endif %}>Stock ↓</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-glint-primary w-100 py-2">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Search Catalog
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabs: Gift Boxes vs Box Items -->
+            <ul class="nav nav-pills mb-4 gap-2" id="catalogTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active rounded-pill px-4" id="boxes-tab-btn" data-bs-toggle="pill" data-bs-target="#boxes-tab" type="button">
+                        <i class="fa-solid fa-box me-1"></i> Gift Boxes ({{ boxes.count }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-4" id="items-tab-btn" data-bs-toggle="pill" data-bs-target="#items-tab" type="button">
+                        <i class="fa-solid fa-cookie-bite me-1"></i> Customizable Items ({{ items.count }})
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="catalogTabsContent">
+                <!-- TAB 1: GIFT BOXES -->
+                <div class="tab-pane fade show active" id="boxes-tab">
+                    <div class="glint-card p-4">
+                        <div class="table-responsive">
+                            <table class="table align-middle table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Gift Box</th>
+                                        <th>Occasion</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for box in boxes %}
+                                    <tr>
+                                        <td>
+                                            <span class="fs-5 me-1">{{ box.emoji }}</span>
+                                            <span class="fw-bold text-dark">{{ box.name }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary-soft text-primary">{{ box.event.name }}</span>
+                                        </td>
+                                        <td class="fw-bold">₹{{ box.base_price }}</td>
+                                        <td>
+                                            <span class="badge {% if box.stock < 10 %}bg-danger{% else %}bg-light text-dark border{% endif %}">
+                                                {{ box.stock }} units
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if box.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end gap-1">
+                                                <a href="{% url 'customizer_builder' box.id %}" target="_blank" class="btn btn-sm btn-light border" title="Preview Builder">
+                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                                </a>
+                                                <a href="{% url 'admin_box_edit' box.pk %}" class="btn btn-sm btn-glint-outline" title="Edit Box">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <form method="POST" action="{% url 'admin_box_delete' box.pk %}" onsubmit="return confirm('Delete this gift box?');">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                        <tr><td colspan="6" class="text-center text-muted py-4">No gift boxes found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: BOX ITEMS -->
+                <div class="tab-pane fade" id="items-tab">
+                    <div class="glint-card p-4">
+                        <div class="table-responsive">
+                            <table class="table align-middle table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                        <tr>
+                                            <td>
+                                                <span class="fs-5 me-1">{{ item.emoji }}</span>
+                                                <span class="fw-bold text-dark">{{ item.name }}</span>
+                                            </td>
+                                            <td>
+                                                {% for category in item.categories %}
+                                                    <span class="badge bg-light text-dark border">{{ category.name }}</span>
+                                                {% empty %}
+                                                    <span class="text-muted">Uncategorized</span>
+                                                {% endfor %}
+                                            </td>
+                                            <td class="fw-bold text-primary">₹{{ item.price }}</td>
+                                            <td>
+                                                <span class="badge {% if item.stock < 15 %}bg-warning text-dark{% else %}bg-light text-dark border{% endif %}">
+                                                    {{ item.stock }} in stock
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if item.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Disabled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-flex justify-content-end gap-1">
+                                                    <a href="{% url 'admin_box_item_edit' item.pk %}" class="btn btn-sm btn-glint-outline" title="Edit Item">
+                                                        <i class="fa-solid fa-pen"></i>
+                                                    </a>
+                                                    <form method="POST" action="{% url 'admin_box_item_delete' item.pk %}" onsubmit="return confirm('Delete this customizable item?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                            <i class="fa-solid fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="6" class="text-center text-muted py-4">No items found</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

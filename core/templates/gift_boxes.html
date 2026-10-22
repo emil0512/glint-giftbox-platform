@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if current_occasion %}{{ current_occasion.name }} Collection - GLINT{% else %}Explore All Gift Boxes - GLINT{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-2">
+            {% if current_occasion %}
+                {{ current_occasion.emoji }} {{ current_occasion.name }} Collection
+            {% elif query %}
+                Search Results for "{{ query }}"
+            {% else %}
+                All Gift Boxes
+            {% endif %}
+        </h1>
+        <p class="text-muted">
+            {% if current_occasion %}
+                {{ current_occasion.description }}
+            {% else %}
+                Select a gift box to start building and customizing your personalized gift
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Filter & Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{% url 'gift_boxes' %}" class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="query" value="{{ query }}" class="form-control"
+                       placeholder="Search by box name, chocolate, roses, pen...">
+            </div>
+            <div class="col-md-4">
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.name }}" {% if selected_category == cat.name %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="sort" class="form-select" onchange="this.form.submit()">
+                    <option value="popular" {% if selected_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                </select>
+            </div>
+        </form>
+
+        <!-- Occasion Quick-Filter -->
+        <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+            <a href="{% url 'gift_boxes' %}" class="btn btn-sm {% if not current_occasion %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                All Occasions
+            </a>
+            {% for occ in occasions %}
+                <a href="{% url 'gift_boxes_by_event' occ.pk %}" class="btn btn-sm {% if current_occasion.pk == occ.pk %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ occ.emoji }} {{ occ.name }}
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<p class="text-muted mb-3">Found <b>{{ gift_boxes|length }}</b> gift box{{ gift_boxes|length|pluralize:"es" }}</p>
+
+{% if current_occasion and event_recommended_items %}
+    <section class="mb-4" aria-labelledby="occasion-recommendations">
+        <h2 class="h4 mb-3" id="occasion-recommendations">Recommended for {{ current_occasion.name }}</h2>
+        <div class="row g-3">
+            {% for item in event_recommended_items %}
+                <div class="col-sm-6 col-lg-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="h6 card-title">{{ item.name }}</h3>
+                            <p class="small text-muted">{{ item.description|truncatewords:16 }}</p>
+                            <strong>₹{{ item.price }}</strong>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <p class="small text-muted mt-2 mb-0">These products are available to select in a gift box customizer for this occasion.</p>
+    </section>
+{% endif %}
+
+{% if gift_boxes %}
+    <div class="row g-4">
+        {% for box in gift_boxes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    {% if box.image_url %}
+                        <img src="{{ box.image_url }}" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;"
+                             onerror="this.src='https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&auto=format&fit=crop&q=80'">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <span class="fs-1">{{ box.emoji }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <span class="badge bg-secondary mb-2 align-self-start">{{ box.event.name }}</span>
+                        <h5 class="card-title">{{ box.name }}</h5>
+                        <p class="card-text small text-muted flex-grow-1">{{ box.description|truncatewords:20 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
+                            <div>
+                                <small class="text-muted d-block">Base Price</small>
+                                <strong>₹{{ box.base_price }}</strong>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'gift_box_detail' box.pk %}" class="btn btn-sm btn-outline-secondary">Preview</a>
+                                <a href="{% url 'customizer_builder' box.pk %}" class="btn btn-sm btn-primary">Build Box</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info text-center py-5">
+        <h4>No Gift Boxes Found</h4>
+        <p>We couldn't find any gift boxes matching your filter criteria.</p>
+        <a href="{% url 'gift_boxes' %}" class="btn btn-primary mt-2">Clear Filters & View All</a>
+    </div>
+{% endif %}
+{% endblock %}

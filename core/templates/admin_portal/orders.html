@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Fulfillment & Processing - Glint Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-5">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="admin-sidebar sticky-top" style="top: 90px;">
+                <div class="text-center pb-3 border-bottom mb-3">
+                    <span class="badge bg-glint-gold text-dark fw-bold px-3 py-1 rounded-pill small mb-1">Glint Admin Suite</span>
+                    <h5 class="fw-bold mb-0 text-dark">Portal Menu</h5>
+                </div>
+
+                <nav class="d-flex flex-column">
+                    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-chart-line text-primary"></i> Dashboard & KPIs
+                    </a>
+                    <a href="{% url 'admin_products' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-boxes-stacked text-primary"></i> Products & Stock
+                    </a>
+                    <a href="{% url 'admin_orders' %}" class="admin-nav-item active text-decoration-none">
+                        <i class="fa-solid fa-clipboard-list text-primary"></i> Order Processing
+                    </a>
+                    <a href="{% url 'admin_export_orders' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-file-csv text-success"></i> Export CSV Report
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Orders Content -->
+        <div class="col-lg-9 col-xl-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h1 class="display-6 fw-bold brand-font mb-0">Customer Orders & Fulfillment 📋</h1>
+                    <p class="text-muted small mb-0">Process orders through fulfillment pipeline, assign tracking numbers & print packing slips</p>
+                </div>
+                <a href="{% url 'admin_export_orders' %}" class="btn btn-sm btn-glint-outline">
+                    <i class="fa-solid fa-file-export me-1"></i> Export Orders (.CSV)
+                </a>
+            </div>
+
+            <!-- Filter & Search Card -->
+            <div class="glint-card p-3 mb-4">
+                <form method="GET" action="{% url 'admin_orders' %}" class="row g-2 align-items-center">
+                    <div class="col-md-4">
+                        <input type="text" name="q" value="{{ query }}" class="form-control form-control-custom" placeholder="Search by Order ID, customer name, email, or phone...">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="status" class="form-select rounded-pill" onchange="this.form.submit()">
+                            <option value="">All Order Statuses</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                            <option value="shipped" {% if status_filter == 'shipped' %}selected{% endif %}>Shipped</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="start_date" value="{{ start_date }}" class="form-control" aria-label="From date">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" name="end_date" value="{{ end_date }}" class="form-control" aria-label="To date">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-glint-primary w-100 py-2">
+                            Search
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Quick Filter Buttons -->
+                <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                    <a href="{% url 'admin_orders' %}" class="btn btn-sm {% if not status_filter %}btn-glint-primary{% else %}btn-glint-outline{% endif %} rounded-pill px-3">
+                        All Orders
+                    </a>
+                    <a href="{% url 'admin_orders' %}?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-glint-primary{% else %}btn-glint-outline{% endif %} rounded-pill px-3">
+                        Pending
+                    </a>
+                    <a href="{% url 'admin_orders' %}?status=paid" class="btn btn-sm {% if status_filter == 'paid' %}btn-glint-primary{% else %}btn-glint-outline{% endif %} rounded-pill px-3">
+                        Paid
+                    </a>
+                    <a href="{% url 'admin_orders' %}?status=shipped" class="btn btn-sm {% if status_filter == 'shipped' %}btn-glint-primary{% else %}btn-glint-outline{% endif %} rounded-pill px-3">
+                        Shipped
+                    </a>
+                    <a href="{% url 'admin_orders' %}?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-glint-primary{% else %}btn-glint-outline{% endif %} rounded-pill px-3">
+                        Completed
+                    </a>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="glint-card p-4">
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ord in orders %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'admin_order_detail' ord.order_number %}" class="fw-bold text-primary text-decoration-none">
+                                            {{ ord.order_number }}
+                                        </a>
+                                        {% if ord.tracking_number %}
+                                            <small class="d-block text-muted">Track: </small>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">{{ ord.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="fw-bold text-dark d-block">{{ ord.full_name }}</span>
+                                        <small class="text-muted">{{ ord.email }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-{{ ord.order_status }}">
+                                            {{ ord.get_order_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end fw-bold">₹{{ ord.grand_total }}</td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <a href="{% url 'admin_order_detail' ord.order_number %}" class="btn btn-sm btn-glint-primary" title="Process Order">
+                                                <i class="fa-solid fa-gear me-1"></i> Process
+                                            </a>
+                                            <a href="{% url 'admin_packing_slip' ord.order_number %}" target="_blank" class="btn btn-sm btn-glint-outline" title="Print Packing Slip">
+                                                <i class="fa-solid fa-print"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="6" class="text-center text-muted py-4">No orders matching criteria found</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

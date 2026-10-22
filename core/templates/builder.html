@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Customize {{ box.name }} - GLINT{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Customize: {{ box.name }}</h1>
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'gift_boxes' %}">Gift Boxes</a></li>
+        <li class="breadcrumb-item active">Customize</li>
+    </ol>
+</div>
+
+<p class="text-muted">Follow our 3-step builder to craft your bespoke gift box</p>
+
+<!-- Stepper Navigation -->
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <span class="badge bg-primary p-2 px-3" id="node-1">1. Select Items</span>
+    <span class="badge bg-secondary p-2 px-3" id="node-2">2. Personalize</span>
+    <span class="badge bg-secondary p-2 px-3" id="node-3">3. Review & Cart</span>
+</div>
+
+<div class="row g-4">
+    <!-- Wizard Steps (Left Column) -->
+    <div class="col-lg-8">
+        <form id="builder-form" method="POST" action="{% url 'add_to_cart' box.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="cart_item_id" value="{{ prefill_data.cart_item_id }}">
+            <input type="hidden" name="draft_id" value="{{ prefill_data.draft_id }}">
+            <input type="hidden" name="selected_items_json" id="selected_items_json" value="[]">
+
+            <!-- STEP 1: ITEM SELECTION -->
+            <div id="step-1-pane" class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">Step 1: Choose Items</h5>
+                        <small class="text-muted">Tick items to include, adjust quantities.</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-save-draft">
+                        <i class="fa-solid fa-bookmark me-1"></i> Save Draft
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Base Box Fee -->
+                    <div class="d-flex justify-content-between align-items-center p-3 mb-4 bg-light rounded border">
+                        <div>
+                            <strong>Base Presentation Box</strong>
+                            <small class="text-muted d-block">Includes gift box, ribbon wrapping, and tissue paper.</small>
+                        </div>
+                        <strong>₹{{ box.base_price }}</strong>
+                    </div>
+
+                    <!-- Available Items -->
+                    <h6 class="mb-3">Available Items:</h6>
+                    {% for item in available_items %}
+                        <div class="d-flex justify-content-between align-items-center p-2 mb-2 border rounded" id="item-card-{{ item.id }}">
+                            <div class="d-flex align-items-center gap-2">
+                                {% for gallery_image in item.images %}
+                                    <img src="{{ gallery_image.image.url }}" alt="{{ item.name }}" class="rounded" style="width: 48px; height: 48px; object-fit: cover;">
+                                {% endfor %}
+                                <input type="checkbox"
+                                       id="cb-item-{{ item.id }}"
+                                       class="form-check-input item-checkbox"
+                                       data-item-id="{{ item.id }}"
+                                       style="width: 20px; height: 20px;">
+                                <div>
+                                    <label for="cb-item-{{ item.id }}" class="fw-bold mb-0" style="cursor: pointer;">
+                                        {{ item.name }}
+                                    </label>
+                                    <small class="text-muted d-block">{{ item.category_name }} • ₹{{ item.price }} each</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-secondary qty-btn-minus" data-item-id="{{ item.id }}">-</button>
+                                    <span class="btn btn-outline-secondary disabled" id="qty-val-{{ item.id }}">0</span>
+                                    <button type="button" class="btn btn-outline-secondary qty-btn-plus" data-item-id="{{ item.id }}">+</button>
+                                </div>
+                                <strong style="min-width: 60px; text-align: right;">₹{{ item.price }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <small class="text-muted">Changes auto-calculate</small>
+                    <button type="button" id="btn-to-step-2" class="btn btn-primary">
+                        Next: Personalize <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: PERSONALIZATION -->
+            <div id="step-2-pane" class="card mb-3" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Step 2: Personalize Your Gift</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-save-draft">
+                        <i class="fa-solid fa-bookmark me-1"></i> Save Draft
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="personalization_name" class="form-label fw-bold">
+                            Recipient Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="personalization_name"
+                               name="personalization_name"
+                               value="{{ prefill_data.personalization_name }}"
+                               class="form-control"
+                               placeholder="e.g., To My Wonderful Mom"
+                               required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="personalization_message" class="form-label fw-bold">
+                            Custom Letter / Message (Optional)
+                        </label>
+                        <textarea id="personalization_message"
+                                  name="personalization_message"
+                                  rows="4"
+                                  class="form-control"
+                                  placeholder="Write your special wishes...">{{ prefill_data.personalization_message }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="personalization_instructions" class="form-label fw-bold">
+                            Special Packing Instructions (Optional)
+                        </label>
+                        <textarea id="personalization_instructions"
+                                  name="personalization_instructions"
+                                  rows="2"
+                                  class="form-control"
+                                  placeholder="e.g. Add extra ribbon, handle with care...">{{ prefill_data.special_instructions|default:'' }}</textarea>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" id="btn-back-to-step-1" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Back to Items
+                    </button>
+                    <button type="button" id="btn-to-step-3" class="btn btn-primary">
+                        Next: Review <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: REVIEW -->
+            <div id="step-3-pane" class="card mb-3" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Step 3: Review Your Gift Box</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-save-draft">
+                        <i class="fa-solid fa-bookmark me-1"></i> Save Draft
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Personalization Preview -->
+                    <div class="p-3 mb-4 bg-light rounded border">
+                        <h6 class="fw-bold mb-2">Personalization Preview</h6>
+                        <p class="mb-1"><b>To:</b> <span id="review-recipient-name"></span></p>
+                        <p class="mb-1 text-muted fst-italic" id="review-message-text"></p>
+                        <p class="mb-0 small text-muted"><b>Instructions:</b> <span id="review-instructions-text"></span></p>
+                    </div>
+
+                    <!-- Items Breakdown -->
+                    <h6 class="fw-bold mb-3">Box Contents:</h6>
+                    <div id="review-items-list" class="mb-4"></div>
+
+                    <!-- Cost Breakdown -->
+                    <div class="p-3 bg-light rounded border">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal (Base + Items)</span>
+                            <span class="fw-bold" id="review-subtotal-price">₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Tax (5% GST)</span>
+                            <span class="fw-bold" id="review-tax-price">₹0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold fs-5">Total</span>
+                            <span class="fw-bold fs-4" id="review-grand-total-price">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" id="btn-back-to-step-2" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Edit Personalization
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-cart-plus me-1"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Live Preview (Right Column) -->
+    <div class="col-lg-4">
+        <div class="card sticky-top" style="top: 70px;">
+            <div class="card-header text-center">
+                <small class="text-muted">Live Box Preview</small>
+                <h5 class="mb-0">{{ box.name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="border rounded p-3 mb-3" id="box-preview-items" style="min-height: 150px;">
+                    <p class="text-muted small text-center my-auto">Select items to preview contents...</p>
+                </div>
+
+                <div class="text-center p-3 bg-light rounded">
+                    <small class="text-muted d-block">Running Total</small>
+                    <strong class="fs-3" id="running-total-price">₹{{ box.base_price }}</strong>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-save-draft">
+                    <i class="fa-solid fa-bookmark me-1"></i> Save Draft
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/customizer.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const boxData = {
+            id: {{ box.id }},
+            name: "{{ box.name|escapejs }}",
+            base_price: {{ box.base_price }},
+            draft_id: "{{ prefill_data.draft_id|escapejs }}"
+        };
+        const itemsCatalog = JSON.parse('{{ items_json_str|escapejs }}');
+        const prefillData = JSON.parse('{{ prefill_json_str|escapejs }}');
+
+        window.customizerInstance = new GlintCustomizer(boxData, itemsCatalog, prefillData);
+    });
+</script>
+{% endblock %}

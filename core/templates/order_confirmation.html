@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Confirmed #{{ order.order_number }} - Glint{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="glint-card p-4 p-md-5 text-center mb-4">
+                <div class="fs-1 mb-2">🎉</div>
+                <h1 class="display-5 fw-bold brand-font mb-2">Order Confirmed!</h1>
+                <p class="lead text-muted mb-4">
+                    Thank you for gifting with Glint, <b>{{ order.full_name }}</b>! We have received your order and our gifting artisans are already preparing your customized boxes.
+                </p>
+
+                <!-- Order Ref Badge -->
+                <div class="p-3 bg-light rounded-4 border d-inline-block px-4 mb-4">
+                    <span class="small text-muted d-block fw-bold">YOUR UNIQUE ORDER NUMBER</span>
+                    <span class="fs-4 fw-bold text-primary">{{ order.order_number }}</span>
+                </div>
+
+                <!-- Next Steps Progress -->
+                <div class="row g-3 text-start my-4">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-white rounded-3 border h-100">
+                            <span class="fs-4 text-primary d-block mb-2">1️⃣</span>
+                            <h6 class="fw-bold mb-1">Order Received</h6>
+                            <p class="small text-muted mb-0">Confirmation sent to <b>{{ order.email }}</b></p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-white rounded-3 border h-100">
+                            <span class="fs-4 text-primary d-block mb-2">2️⃣</span>
+                            <h6 class="fw-bold mb-1">Custom Assembly</h6>
+                            <p class="small text-muted mb-0">Treats packed & personalized letter printed</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-white rounded-3 border h-100">
+                            <span class="fs-4 text-primary d-block mb-2">3️⃣</span>
+                            <h6 class="fw-bold mb-1">Express Dispatch</h6>
+                            <p class="small text-muted mb-0">Shipped with live delivery tracking</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Itemized Order Details -->
+                <div class="text-start p-4 bg-white rounded-4 border my-4">
+                    <h5 class="fw-bold mb-3">Order Details:</h5>
+                    <div class="mb-3">
+                        {% for item in order.items.all %}
+                            <div class="p-3 bg-light rounded-3 mb-2 border">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="fw-bold mb-1 text-dark">{{ item.quantity }}x {{ item.box_name }}</h6>
+                                    <span class="fw-bold text-primary">₹{{ item.total_price }}</span>
+                                </div>
+                                <p class="small text-muted mb-1"><b>To:</b> {{ item.personalization_name }}</p>
+                                {% if item.personalization_message %}
+                                    <p class="small fst-italic text-muted mb-1">"{{ item.personalization_message }}"</p>
+                                {% endif %}
+                                <div class="small text-muted">
+                                    <b>Items:</b>
+                                    {% for s_item in item.selections.all %}
+                                        {{ s_item.item_name }} ({{ s_item.quantity }}x){% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Items Subtotal:</span>
+                        <span>₹{{ order.subtotal }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>GST Tax (5%):</span>
+                        <span>₹{{ order.tax_amount }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-2">
+                        <span>Shipping:</span>
+                        <span>{% if order.shipping_amount == 0 %}FREE{% else %}₹{{ order.shipping_amount }}{% endif %}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5 text-dark">
+                        <span>Total Paid:</span>
+                        <span class="text-primary">₹{{ order.grand_total }}</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="{% url 'order_detail' order.order_number %}" class="btn btn-glint-primary px-4 py-2">
+                        <i class="fa-solid fa-receipt me-2"></i> View Full Invoice & Tracking
+                    </a>
+                    <a href="{% url 'gift_boxes' %}" class="btn btn-glint-outline px-4 py-2">
+                        <i class="fa-solid fa-gift me-2"></i> Continue Gifting
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

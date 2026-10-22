@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Order #{{ order.order_number }} - Glint Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <span class="badge bg-glint-gold text-dark fw-bold px-3 py-1 rounded-pill small mb-1">Admin Order Processor</span>
+            <h1 class="display-6 fw-bold brand-font mb-0">Order: {{ order.order_number }}</h1>
+            <p class="text-muted small mb-0">Placed by {{ order.full_name }} ({{ order.email }}) on {{ order.created_at|date:"F d, Y, h:i A" }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'admin_packing_slip' order.order_number %}" target="_blank" class="btn btn-sm btn-glint-outline">
+                <i class="fa-solid fa-print me-1"></i> Packing Slip
+            </a>
+            <a href="{% url 'admin_orders' %}" class="btn btn-sm btn-light border">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Orders
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Order Processing Controls Form -->
+        <div class="col-lg-5">
+            <div class="glint-card p-4">
+                <h4 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i> Update Order Status</h4>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Order Fulfillment Status</label>
+                        {{ form.order_status }}
+                        {{ form.order_status.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Payment Status</label>
+                        {{ form.payment_status }}
+                        {{ form.payment_status.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Courier Tracking ID / AWBL</label>
+                        {{ form.tracking_number }}
+                        {{ form.tracking_number.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Delivery Date</label>
+                        {{ form.delivery_date }}
+                        {{ form.delivery_date.errors }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Internal Staff Notes</label>
+                        {{ form.internal_notes }}
+                        {{ form.internal_notes.errors }}
+                    </div>
+
+                    <button type="submit" class="btn btn-glint-primary btn-lg w-100 py-3">
+                        <i class="fa-solid fa-check me-2"></i> Update Order
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Order Breakdown -->
+        <div class="col-lg-7">
+            <div class="glint-card p-4">
+                <h4 class="fw-bold mb-3">Order Details & Custom Items</h4>
+
+                <!-- Delivery Destination -->
+                <div class="p-3 bg-light rounded-3 border mb-4">
+                    <h6 class="fw-bold text-dark mb-1">Delivery Address</h6>
+                    <p class="small text-muted mb-0">
+                        <b>{{ order.full_name }}</b> (Phone: {{ order.phone }})<br>
+                        {{ order.shipping_address }}, {{ order.city }}, {{ order.state }} - {{ order.postal_code }}<br>
+                        {% if order.tracking_number %}<b>Tracking:</b> {{ order.tracking_number }}<br>{% endif %}
+                        {% if order.delivery_date %}<b>Delivery Date:</b> {{ order.delivery_date|date:"M d, Y" }}{% endif %}
+                    </p>
+                </div>
+
+                <!-- Custom Gift Boxes List -->
+                <div class="mb-4">
+                    {% for item in order.items.all %}
+                        <div class="p-3 bg-white rounded-3 border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold text-primary mb-0">{{ item.quantity }}x {{ item.box_name }}</h5>
+                                <span class="fw-bold fs-5">₹{{ item.total_price }}</span>
+                            </div>
+
+                            <p class="small text-muted mb-1"><b>Recipient Name:</b> {{ item.personalization_name }}</p>
+                            
+                            {% if item.personalization_message %}
+                                <div class="small fst-italic text-muted bg-light p-2 rounded-2 mb-2">
+                                    "{{ item.personalization_message }}"
+                                </div>
+                            {% endif %}
+
+                            {% if item.special_instructions %}
+                                <p class="small text-muted mb-2"><b>Instructions:</b> {{ item.special_instructions }}</p>
+                            {% endif %}
+
+                            <h6 class="fw-bold small mb-1">Selected Box Items:</h6>
+                            <ul class="small text-muted mb-0">
+                                {% for it in item.selections.all %}
+                                    <li>{{ it.item_name }} (Quantity: {{ it.quantity }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Financial Total -->
+                <div class="p-3 bg-light rounded-3 border d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small d-block">Subtotal: ₹{{ order.subtotal }} + GST: ₹{{ order.tax_amount }}</span>
+                        <span class="fw-bold fs-5 text-dark">Grand Total</span>
+                    </div>
+                    <span class="price-tag fs-2">₹{{ order.grand_total }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

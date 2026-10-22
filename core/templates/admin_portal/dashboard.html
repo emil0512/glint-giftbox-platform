@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Analytics Dashboard - Glint Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-5">
+    <div class="row g-4">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 col-xl-2">
+            <div class="admin-sidebar sticky-top" style="top: 90px;">
+                <div class="text-center pb-3 border-bottom mb-3">
+                    <span class="badge bg-glint-gold text-dark fw-bold px-3 py-1 rounded-pill small mb-1">Glint Admin Suite</span>
+                    <h5 class="fw-bold mb-0 text-dark">Portal Menu</h5>
+                </div>
+
+                <nav class="d-flex flex-column">
+                    <a href="{% url 'admin_dashboard' %}" class="admin-nav-item active text-decoration-none">
+                        <i class="fa-solid fa-chart-line text-primary"></i> Dashboard & KPIs
+                    </a>
+                    <a href="{% url 'admin_products' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-boxes-stacked text-primary"></i> Products & Stock
+                    </a>
+                    <a href="{% url 'admin_orders' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-clipboard-list text-primary"></i> Order Processing
+                    </a>
+                    <a href="{% url 'admin_export_orders' %}" class="admin-nav-item text-decoration-none">
+                        <i class="fa-solid fa-file-csv text-success"></i> Export CSV Report
+                    </a>
+                    <a href="/django-admin/" class="admin-nav-item text-decoration-none text-muted" target="_blank">
+                        <i class="fa-solid fa-shield-halved text-secondary"></i> Django Admin ↗
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div class="col-lg-9 col-xl-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h1 class="display-6 fw-bold brand-font mb-0">Platform Performance & Analytics 📊</h1>
+                    <p class="text-muted small mb-0">Real-time metrics, order volumes, revenue trends & product turnover</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'admin_export_orders' %}" class="btn btn-sm btn-glint-outline">
+                        <i class="fa-solid fa-download me-1"></i> Export Orders (.CSV)
+                    </a>
+                    <a href="{% url 'admin_box_create' %}" class="btn btn-sm btn-glint-primary">
+                        <i class="fa-solid fa-plus me-1"></i> Add New Gift Box
+                    </a>
+                </div>
+            </div>
+            <form method="GET" class="glint-card p-3 mb-4 row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="analytics-start-date" class="form-label small">From date</label>
+                    <input type="date" id="analytics-start-date" name="start_date" value="{{ start_date }}" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="analytics-end-date" class="form-label small">To date</label>
+                    <input type="date" id="analytics-end-date" name="end_date" value="{{ end_date }}" class="form-control">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-glint-primary">Apply date range</button>
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-glint-outline">Clear</a>
+                </div>
+            </form>
+
+            <!-- KPI Cards Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card">
+                        <span class="text-muted small fw-bold d-block mb-1">TOTAL REVENUE</span>
+                        <h3 class="fw-bold text-primary mb-0">₹{{ total_revenue }}</h3>
+                        <small class="text-success fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i> Lifetime</small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card">
+                        <span class="text-muted small fw-bold d-block mb-1">TOTAL ORDERS</span>
+                        <h3 class="fw-bold text-dark mb-0">{{ total_orders }}</h3>
+                        <small class="text-muted">Processed orders</small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card">
+                        <span class="text-muted small fw-bold d-block mb-1">AVG. ORDER VALUE</span>
+                        <h3 class="fw-bold text-dark mb-0">₹{{ aov }}</h3>
+                        <small class="text-primary fw-bold">AOV metric</small>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card">
+                        <span class="text-muted small fw-bold d-block mb-1">CUSTOMERS</span>
+                        <h3 class="fw-bold text-dark mb-0">{{ total_customers }}</h3>
+                        <small class="text-info fw-bold">Registered accounts</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Metrics Bar -->
+            <div class="glint-card p-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="fw-bold small text-muted">ORDER PIPELINE STATUS:</span>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="status-badge status-pending">Pending: {{ status_dict.pending|default:0 }}</span>
+                        <span class="status-badge status-paid">Paid: {{ status_dict.paid|default:0 }}</span>
+                        <span class="status-badge status-shipped">Shipped: {{ status_dict.shipped|default:0 }}</span>
+                        <span class="status-badge status-completed">Completed: {{ status_dict.completed|default:0 }}</span>
+                        <span class="status-badge status-cancelled">Cancelled: {{ status_dict.cancelled|default:0 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row g-4 mb-4">
+                <div class="col-lg-7">
+                    <div class="glint-card p-4 h-100">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-area text-primary me-2"></i> Monthly Revenue Trend</h5>
+                        <canvas id="salesTrendChart" height="180"></canvas>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="glint-card p-4 h-100">
+                        <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Sales by Occasion</h5>
+                        <canvas id="occasionsChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products & Recent Orders Grid -->
+            <div class="row g-4">
+                <!-- Top Products Table -->
+                <div class="col-lg-5">
+                    <div class="glint-card p-4 h-100">
+                        <h5 class="fw-bold mb-3">🏆 Best Selling Gift Boxes</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Box Name</th>
+                                        <th class="text-center">Sold</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for box in top_boxes %}
+                                        <tr>
+                                            <td class="fw-bold small text-primary">{{ box.box_name }}</td>
+                                            <td class="text-center">{{ box.total_sold }}</td>
+                                            <td class="text-end fw-bold">₹{{ box.revenue }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="3" class="text-center text-muted small">No order data yet</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <h6 class="fw-bold mt-3 mb-2">Most selected products</h6>
+                        <ol class="small mb-0">
+                            {% for item in top_items %}
+                                <li>{{ item.item_name }} <span class="text-muted">({{ item.total_sold }} sold)</span></li>
+                            {% empty %}
+                                <li class="text-muted">No product selections in this date range.</li>
+                            {% endfor %}
+                        </ol>
+                        <h6 class="fw-bold mt-3 mb-2">Best-selling categories</h6>
+                        <ol class="small mb-0">
+                            {% for category in top_categories %}
+                                <li>{{ category.box_item__catalog_assignments__category__name }} <span class="text-muted">({{ category.total_sold }} sold)</span></li>
+                            {% empty %}
+                                <li class="text-muted">No category sales in this date range.</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="col-lg-7">
+                    <div class="glint-card p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">📦 Recent Customer Orders</h5>
+                            <a href="{% url 'admin_orders' %}" class="small text-primary fw-bold text-decoration-none">View All Orders →</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ord in recent_orders %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'admin_order_detail' ord.order_number %}" class="fw-bold text-primary text-decoration-none">
+                                                    {{ ord.order_number }}
+                                                </a>
+                                            </td>
+                                            <td class="small">{{ ord.full_name }}</td>
+                                            <td>
+                                                <span class="status-badge status-{{ ord.order_status }} small">
+                                                    {{ ord.get_order_status_display }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end fw-bold">₹{{ ord.grand_total }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td colspan="4" class="text-center text-muted small">No orders recorded</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    window.occasionLabels = JSON.parse('{{ occasion_labels_json|escapejs }}');
+    window.occasionValues = JSON.parse('{{ occasion_values_json|escapejs }}');
+</script>
+<script src="{% static 'js/analytics.js' %}"></script>
+{% endblock %}

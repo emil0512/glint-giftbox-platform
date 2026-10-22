@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packing Slip #{{ order.order_number }} - Glint</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #222; }
+        .packing-container { max-width: 800px; margin: 20px auto; padding: 30px; border: 1px solid #ddd; }
+        @media print {
+            .no-print { display: none !important; }
+            .packing-container { border: none !important; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-3 no-print text-center">
+        <button onclick="window.print();" class="btn btn-primary px-4">🖨️ Print Packing Slip</button>
+        <button onclick="window.close();" class="btn btn-secondary px-4 ms-2">Close</button>
+    </div>
+
+    <div class="packing-container">
+        <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+            <div>
+                <h2 class="fw-bold mb-0">GLINT GIFTS - PACKING SLIP</h2>
+                <small class="text-muted">Personalized Gifting Fulfillment Center</small>
+            </div>
+            <div class="text-end">
+                <h5 class="fw-bold mb-0">{{ order.order_number }}</h5>
+                <small class="text-muted">Date: {{ order.created_at|date:"Y-m-d H:i" }}</small>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-6">
+                <h6 class="fw-bold mb-1">SHIP TO:</h6>
+                <p class="small mb-0">
+                    <b>{{ order.full_name }}</b><br>
+                    {{ order.shipping_address }}<br>
+                    {{ order.city }}, {{ order.state }} - {{ order.postal_code }}<br>
+                    Phone: {{ order.phone }}
+                </p>
+            </div>
+            <div class="col-6 text-end">
+                <h6 class="fw-bold mb-1">ORDER SPECS:</h6>
+                <p class="small mb-0">
+                    Payment Method: {{ order.get_payment_method_display }}<br>
+                    Tracking ID: {{ order.tracking_number|default:"(Pending assignment)" }}<br>
+                    {% if order.delivery_date %}Delivery By: <b></b>{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <h6 class="fw-bold mb-2">CUSTOM BOX PACKING CHECKLIST:</h6>
+        <table class="table table-bordered table-sm align-middle mb-4">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 40px;" class="text-center">✓</th>
+                    <th>Box Title & Personalization</th>
+                    <th>Included Customizable Items</th>
+                    <th style="width: 60px;" class="text-center">Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                    <tr>
+                        <td class="text-center">☐</td>
+                        <td>
+                            <b>{{ item.box_name }}</b><br>
+                            <span class="small text-muted">Recipient Tag: <b>{{ item.personalization_name }}</b></span><br>
+                            {% if item.personalization_message %}
+                                <span class="small fst-italic">Card Message: "{{ item.personalization_message }}"</span><br>
+                            {% endif %}
+                            {% if item.personalization_instructions %}
+                                <span class="small text-danger"><b>Note:</b> </span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            <ul class="mb-0 ps-3">
+                                {% for it in item.selections.all %}
+                                    <li>{{ it.item_name }} (Qty: {{ it.quantity }})</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="text-center fw-bold">{{ item.quantity }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if order.internal_notes %}
+            <div class="p-3 bg-light border rounded mb-3">
+                <h6 class="fw-bold mb-1">Staff Fulfillment Notes:</h6>
+                <p class="small mb-0"></p>
+            </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between pt-4 border-top text-muted small">
+            <span>Packed By: ___________________</span>
+            <span>Inspected By: ___________________</span>
+            <span>Date: ___________________</span>
+        </div>
+    </div>
+</body>
+</html>

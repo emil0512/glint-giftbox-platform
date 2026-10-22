@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account & Orders - Glint{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <span class="badge bg-primary-soft text-primary px-3 py-1 rounded-pill small mb-1">
+                Customer Dashboard
+            </span>
+            <h1 class="display-5 fw-bold brand-font mb-0">Welcome, {{ user.first_name|default:user.username }} 🌸</h1>
+            <p class="text-muted small mb-0">Member since {{ user.date_joined|date:"F d, Y" }}</p>
+        </div>
+        <form method="POST" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-glint-outline text-danger border-danger">
+                <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+            </button>
+        </form>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4 gap-2" id="profileTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active rounded-pill px-4" id="orders-tab-btn" data-bs-toggle="pill" data-bs-target="#orders-tab" type="button" role="tab">
+                <i class="fa-solid fa-box-open me-1"></i> My Order History ({{ orders.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4" id="drafts-tab-btn" data-bs-toggle="pill" data-bs-target="#drafts-tab" type="button" role="tab">
+                <i class="fa-solid fa-bookmark me-1"></i> Saved Drafts ({{ drafts.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link rounded-pill px-4" id="account-tab-btn" data-bs-toggle="pill" data-bs-target="#account-tab" type="button" role="tab">
+                <i class="fa-solid fa-user-pen me-1"></i> Profile & Address Book
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="profileTabsContent">
+        <!-- TAB 1: ORDER HISTORY -->
+        <div class="tab-pane fade show active" id="orders-tab" role="tabpanel">
+            <div class="glint-card p-4">
+                <h4 class="fw-bold mb-3">Your Orders</h4>
+                <form method="GET" class="row g-2 align-items-end mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label small" for="order-status-filter">Status</label>
+                        <select name="status" id="order-status-filter" class="form-select">
+                            <option value="">All statuses</option>
+                            {% for value, label in order_status_choices %}
+                                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small" for="order-start-date">From</label>
+                        <input type="date" id="order-start-date" name="start_date" value="{{ start_date }}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small" for="order-end-date">To</label>
+                        <input type="date" id="order-end-date" name="end_date" value="{{ end_date }}" class="form-control">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-glint-primary">Filter</button>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </form>
+
+                {% if orders %}
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Amount Paid</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <span class="fw-bold text-primary">{{ order.order_number }}</span>
+                                            {% if False %}
+                                                <small class="d-block text-muted">Track: </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="status-badge status-{{ order.order_status }}">
+                                                {{ order.get_order_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold">₹{{ order.grand_total }}</td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'order_detail' order.order_number %}" class="btn btn-sm btn-glint-outline py-1 px-2" title="View Full Invoice & Details">
+                                                    <i class="fa-solid fa-eye me-1"></i> Details
+                                                </a>
+
+                                                {% with first_item=order.items.first %}
+                                                    {% if first_item and first_item.gift_box %}
+                                                        <a href="{% url 'customizer_builder' first_item.gift_box.id %}?reorder={{ first_item.id }}" class="btn btn-sm btn-glint-primary py-1 px-2" title="Reorder exact same configuration">
+                                                            <i class="fa-solid fa-arrow-rotate-right me-1"></i> Reorder
+                                                        </a>
+                                                    {% endif %}
+                                                {% endwith %}
+
+                                                {% if order.order_status in 'pending,paid' %}
+                                                    <form method="POST" action="{% url 'cancel_order' order.order_number %}" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2">
+                                                            <i class="fa-solid fa-xmark"></i> Cancel
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="fs-1 mb-2">📦</div>
+                        <h5>No orders placed yet</h5>
+                        <p class="text-muted small">Once you customize and purchase gift boxes, your order tracking will appear here.</p>
+                        <a href="{% url 'gift_boxes' %}" class="btn btn-sm btn-glint-primary mt-2">
+                            Explore Gift Boxes
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- TAB 2: SAVED DRAFTS -->
+        <div class="tab-pane fade" id="drafts-tab" role="tabpanel">
+            <div class="glint-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold mb-0">Saved Incomplete Gift Boxes</h4>
+                    <form method="GET" class="d-flex align-items-center gap-2">
+                        <label for="draft-sort" class="small text-muted">Sort</label>
+                        <select id="draft-sort" name="draft_sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="recent" {% if draft_sort == 'recent' %}selected{% endif %}>Recently updated</option>
+                            <option value="oldest" {% if draft_sort == 'oldest' %}selected{% endif %}>Oldest updated</option>
+                            <option value="name" {% if draft_sort == 'name' %}selected{% endif %}>Name</option>
+                        </select>
+                    </form>
+                </div>
+                <p class="small text-muted">Drafts are recoverable for at least 30 days.</p>
+
+                {% if drafts %}
+                    <div class="row g-3">
+                        {% for draft in drafts %}
+                            <div class="col-md-6">
+                                <div class="p-3 bg-white rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h5 class="fw-bold mb-1 text-dark">{{ draft.draft_name|default:"Saved draft" }} - {{ draft.gift_box.name }}</h5>
+                                                <span class="badge bg-primary-soft text-primary small">{{ draft.gift_box.name }}</span>
+                                            </div>
+                                            <span class="price-tag fs-5">₹{{ draft.calculated_total }}</span>
+                                        </div>
+
+                                        <p class="small text-muted mb-2">
+                                            <b>To:</b> {{ draft.personalization_name|default:"(Not set yet)" }} • 
+                                            <b>Items:</b> {{ draft.selections.count }} selected
+                                        </p>
+                                        <small class="text-muted d-block mb-3">Last saved on {{ draft.updated_at|date:"M d, Y, h:i A" }}</small>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'customizer_builder' draft.gift_box.id %}?draft_id={{ draft.id }}" class="btn btn-sm btn-glint-primary">
+                                                <i class="fa-solid fa-play me-1"></i> Resume Builder
+                                            </a>
+                                            <!-- Rename Draft Modal Trigger -->
+                                            <button type="button" class="btn btn-sm btn-glint-outline" data-bs-toggle="modal" data-bs-target="#renameDraftModal{{ draft.id }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                        </div>
+                                        <form method="POST" action="{% url 'delete_draft' draft.id %}" onsubmit="return confirm('Delete this saved draft?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Rename Modal -->
+                                <div class="modal fade" id="renameDraftModal{{ draft.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <form method="POST" action="{% url 'rename_draft' draft.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-header border-0">
+                                                    <h5 class="modal-title fw-bold">Rename Saved Draft</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <label class="form-label small fw-bold">Draft Name</label>
+                                                    <input type="text" name="draft_name" value="{{ draft.draft_name|default:'Saved draft' }}" class="form-control form-control-custom" required>
+                                                </div>
+                                                <div class="modal-footer border-0">
+                                                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-glint-primary rounded-pill">Save Changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="fs-1 mb-2">🔖</div>
+                        <h5>No saved drafts yet</h5>
+                        <p class="text-muted small">You can pause and save any gift box customization in the builder to complete later.</p>
+                        <a href="{% url 'gift_boxes' %}" class="btn btn-sm btn-glint-primary mt-2">
+                            Start a Custom Box
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- TAB 3: ACCOUNT PROFILE & ADDRESS -->
+        <div class="tab-pane fade" id="account-tab" role="tabpanel">
+            <div class="glint-card p-4">
+                <h4 class="fw-bold mb-3">Update Profile & Default Shipping Address</h4>
+
+                <form method="POST" action="{% url 'profile' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Full Name</label>
+                            {{ form.full_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Email Address</label>
+                            {{ form.email }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Phone Number</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Street Address / Apartment</label>
+                            {{ form.address_line1 }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">City</label>
+                            {{ form.city }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">State</label>
+                            {{ form.state }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">PIN / Postal Code</label>
+                            {{ form.postal_code }}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-glint-primary mt-4 px-4 py-2">
+                        <i class="fa-solid fa-check me-2"></i> Save Profile Details
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Handle hash navigation to specific tab (e.g. #drafts-tab)
+        const hash = window.location.hash;
+        if (hash === '#drafts-tab') {
+            const btn = document.getElementById('drafts-tab-btn');
+            if (btn) btn.click();
+        }
+    });
+</script>
+{% endblock %}
