@@ -476,6 +476,24 @@ class GlintPlatformTests(TestCase):
         self.assertContains(response, 'Phone number must be exactly 10 digits.')
         self.assertContains(response, 'id="account-tab" role="tabpanel"')
 
+    def test_customer_dashboard_shows_active_gift_boxes(self):
+        self.client.login(username='testuser', password='Password123')
+        inactive_box = GiftBox.objects.create(
+            name='Inactive Gift Box',
+            event=self.occasion,
+            base_price=Decimal('199.00'),
+            is_active=False,
+        )
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Explore Gift Boxes')
+        self.assertContains(response, self.box.name)
+        self.assertContains(response, reverse('gift_box_detail', args=[self.box.pk]))
+        self.assertContains(response, reverse('customizer_builder', args=[self.box.pk]))
+        self.assertNotContains(response, inactive_box.name)
+
     def test_password_reset_handles_unknown_email_without_enumerating_accounts(self):
         response = self.client.post(
             reverse('forgot_password'),

@@ -1364,6 +1364,9 @@ def profile(request):
     drafts = BoxConfiguration.objects.filter(
         user=request.user, status=BoxConfiguration.DRAFT,
     ).select_related('gift_box')
+    available_gift_boxes = GiftBox.objects.filter(
+        is_active=True,
+    ).select_related('event').order_by('name')
     draft_sort = request.GET.get('draft_sort', 'recent')
     if draft_sort == 'name':
         drafts = drafts.order_by('draft_name', 'updated_at')
@@ -1397,6 +1400,7 @@ def profile(request):
         'active_tab': 'account-tab' if request.method == 'POST' and form.errors else 'orders-tab',
         'orders': orders,
         'drafts': drafts,
+        'available_gift_boxes': available_gift_boxes,
         'status_filter': status_filter,
         'start_date': start_date,
         'end_date': end_date,
