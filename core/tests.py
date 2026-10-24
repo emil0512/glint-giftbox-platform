@@ -392,7 +392,7 @@ class GlintPlatformTests(TestCase):
         self.assertEqual(self.item1.stock, initial_item_stock)
 
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
-    def test_registration_requires_email_activation(self):
+    def test_registration_does_not_require_email_activation(self):
         response = self.client.post(reverse('register'), {
             'full_name': 'New Customer',
             'email': 'new-customer@example.com',
@@ -402,16 +402,12 @@ class GlintPlatformTests(TestCase):
         })
         self.assertRedirects(response, reverse('login'))
         user = User.objects.get(email='new-customer@example.com')
-        self.assertFalse(user.is_active)
-        self.assertEqual(len(mail.outbox), 1)
-        activation_url = next(
-            line for line in mail.outbox[0].body.splitlines()
-            if '/activate/' in line
-        )
-        response = self.client.get(activation_url)
-        self.assertRedirects(response, reverse('login'))
-        user.refresh_from_db()
         self.assertTrue(user.is_active)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertTrue(self.client.login(
+            username=user.username,
+            password='Password123!',
+        ))
 
     def test_registration_policy_links_open_information_pages(self):
         response = self.client.get(reverse('register'))
@@ -516,6 +512,46 @@ class GlintPlatformTests(TestCase):
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password('NewPassword123!'))
         self.assertNotIn('password_reset_otp', self.client.session)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_password_reset_activates_unactivated_account(self):
+        self.user.is_active = False
+        self.user.save(update_fields=['is_active'])
+
+        response = self.client.post(
+            reverse('forgot_password'),
+            {'email': self.user.email},
+        )
+        self.assertRedirects(response, reverse('reset_password_otp'))
+        otp = self.client.session['password_reset_otp']
+
+        response = self.client.post(reverse('reset_password_otp'), {
+            'otp': otp,
+            'new_password': 'NewPassword123!',
+            'confirm_password': 'NewPassword123!',
+        })
+
+        self.assertRedirects(response, reverse('login'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+        self.assertTrue(self.user.check_password('NewPassword123!'))
+        self.assertTrue(self.client.login(username='testuser', password='NewPassword123!'))
+
+    def test_unactivated_account_login_explains_email_verification(self):
+        self.user.is_active = False
+        self.user.save(update_fields=['is_active'])
+
+        response = self.client.post(reverse('login'), {
+            'username_or_email': self.user.username,
+            'password': 'Password123',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            'This account is not activated. Use Forgot Password to verify your email and activate it.',
+        )
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_password_reset_locks_otp_after_five_incorrect_attempts(self):
         session = self.client.session

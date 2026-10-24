@@ -284,33 +284,10 @@ def register(request):
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                is_active=False,
+                is_active=True,
             )
             UserProfile.objects.create(user=user)
-
-            activation_url = request.build_absolute_uri(reverse(
-                'activate_account',
-                kwargs={
-                    'uidb64': urlsafe_base64_encode(force_bytes(user.pk)),
-                    'token': default_token_generator.make_token(user),
-                },
-            ))
-            try:
-                send_mail(
-                    subject='Activate your Glint account',
-                    message=f'Hello {full_name},\n\nActivate your account using this link:\n{activation_url}\n\nThe link expires after the configured password-reset timeout.',
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[email],
-                    fail_silently=False,
-                )
-            except Exception:
-                logger.exception('Unable to send activation email user_id=%s', user.pk)
-                messages.error(
-                    request,
-                    'Your account was created, but we could not send the activation email. Please contact support.',
-                )
-            else:
-                messages.success(request, 'Account created. Check your email to activate it before signing in.')
+            messages.success(request, 'Account created. You can now sign in.')
             return redirect('login')
     else:
         form = RegisterForm()
@@ -341,6 +318,13 @@ def user_login(request):
                 target_user = User.objects.filter(username__iexact=username_or_email).first()
 
             if target_user:
+                if not target_user.is_active:
+                    messages.error(
+                        request,
+                        'This account is not activated. Use Forgot Password to verify your email and activate it.',
+                    )
+                    return render(request, 'login.html', {'form': form, 'next': next_url})
+
                 cache_key = f"login_attempts_{target_user.username}"
                 attempts = cache.get(cache_key, 0)
                 
@@ -510,7 +494,8 @@ def reset_password_otp(request):
         user = User.objects.filter(email__iexact=email).first()
         if user:
             user.set_password(new_password)
-            user.save()
+            user.is_active = True
+            user.save(update_fields=['password', 'is_active'])
             cache.delete(f"login_attempts_{user.username}")
         else:
             for key in (
