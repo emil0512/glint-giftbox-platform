@@ -486,6 +486,17 @@ class GlintPlatformTests(TestCase):
         self.assertNotContains(response, 'No registered account found')
         self.assertNotIn('password_reset_otp', self.client.session)
 
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend')
+    def test_password_reset_does_not_claim_email_was_sent_with_console_backend(self):
+        response = self.client.post(
+            reverse('forgot_password'),
+            {'email': self.user.email},
+            follow=True,
+        )
+
+        self.assertContains(response, 'Email delivery is not configured yet.')
+        self.assertNotIn('password_reset_otp', self.client.session)
+
     @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
     def test_password_reset_otp_completes_password_change(self):
         response = self.client.post(

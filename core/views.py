@@ -13,7 +13,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import get_connection, send_mail
+from django.core.mail.backends.console import EmailBackend as ConsoleEmailBackend
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.conf import settings
@@ -406,6 +407,14 @@ def forgot_password(request):
             messages.success(
                 request,
                 'If an account exists for that email, password reset instructions will be sent.',
+            )
+            return redirect('forgot_password')
+
+        if isinstance(get_connection(), ConsoleEmailBackend):
+            logger.warning('Password reset requested but email delivery is not configured.')
+            messages.error(
+                request,
+                'Email delivery is not configured yet. Please contact support to reset your password.',
             )
             return redirect('forgot_password')
 
