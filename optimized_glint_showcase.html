@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glint - Premium Gift Collection (Ultra-Optimized)</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ==========================================================
+           1. CORE TOKENS & RESET
+           ========================================================== */
+        :root {
+            --primary: #f553a8;
+            --primary-hover: #e03b93;
+            --secondary: #7e66f6;
+            --text-dark: #261928;
+            --text-mid: #5a455a;
+            --text-muted: #856f84;
+            --surface-glass: rgba(255, 255, 255, 0.88);
+            --surface-glass-hover: rgba(255, 255, 255, 0.98);
+            --border-glass: rgba(255, 255, 255, 0.85);
+            --shadow-card: 0 16px 36px rgba(160, 120, 175, 0.12);
+            --shadow-hover: 0 24px 48px rgba(180, 100, 160, 0.20);
+            --radius-card: 24px;
+            --radius-btn: 999px;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Manrope', -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            color: var(--text-dark);
+            min-height: 100vh;
+            /* Static multi-stop radial gradients: eliminates heavy per-frame CSS blur filter calculations */
+            background-color: #fff9fc;
+            background-image: 
+                radial-gradient(circle at 10% 8%, rgba(255, 185, 225, 0.45) 0%, transparent 45%),
+                radial-gradient(circle at 90% 40%, rgba(200, 185, 255, 0.40) 0%, transparent 45%),
+                radial-gradient(circle at 35% 85%, rgba(255, 225, 160, 0.30) 0%, transparent 40%),
+                linear-gradient(135deg, #fffafd 0%, #f7f1ff 50%, #fff7f9 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ==========================================================
+           2. ZERO-LAG FLOATING DECORATIVE BACKGROUND LAYER
+           - strictly pointer-events: none (never interferes with products or clicks)
+           - z-index: 0 (stays strictly behind content)
+           - will-change: transform, opacity (GPU hardware composited)
+           - transform: translate3d (avoids all layout and reflow thrashing)
+           - No heavy drop-shadows or per-element blur on moving items!
+           ========================================================== */
+        .ambient-motion-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none; /* Never blocks clicks on product cards or buttons */
+            z-index: 0;           /* Strictly behind all content */
+            overflow: hidden;
+            contain: strict;       /* Isolates layer rendering for maximum browser optimization */
+        }
+
+        .ambient-item {
+            position: absolute;
+            user-select: none;
+            pointer-events: none;
+            will-change: transform, opacity;
+            opacity: 0.55;
+            backface-visibility: hidden;
+            transform: translate3d(0, 0, 0);
+        }
+
+        /* Butterfly wing flutter: isolated to an inner span to prevent layout recalc */
+        .butterfly-flutter {
+            display: inline-block;
+            transform-origin: center;
+            animation: wingTick 0.36s ease-in-out infinite alternate;
+        }
+
+        @keyframes wingTick {
+            0% { transform: scaleX(1) rotate(0deg); }
+            100% { transform: scaleX(0.42) rotate(4deg); }
+        }
+
+        /* Pure CSS Compositor-driven drifting paths for elements */
+        /* Multiple prime-number durations ensure paths are organic and non-repetitive */
+        .float-path-1 { animation: floatDrift1 18s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .float-path-2 { animation: floatDrift2 23s cubic-bezier(0.35, 0, 0.25, 1) infinite; }
+        .float-path-3 { animation: floatDrift3 27s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+        .float-path-4 { animation: floatDrift4 21s cubic-bezier(0.35, 0, 0.25, 1) infinite; }
+        .float-path-5 { animation: floatDrift5 25s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+        @keyframes floatDrift1 {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.2; }
+            25%  { transform: translate3d(60px, 80px, 0) rotate(15deg); opacity: 0.65; }
+            50%  { transform: translate3d(-40px, 180px, 0) rotate(-10deg); opacity: 0.55; }
+            75%  { transform: translate3d(50px, 290px, 0) rotate(18deg); opacity: 0.70; }
+            100% { transform: translate3d(0, 400px, 0) rotate(-5deg); opacity: 0; }
+        }
+
+        @keyframes floatDrift2 {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+            20%  { transform: translate3d(-50px, 90px, 0) rotate(-14deg); opacity: 0.60; }
+            50%  { transform: translate3d(45px, 200px, 0) rotate(12deg); opacity: 0.75; }
+            80%  { transform: translate3d(-30px, 320px, 0) rotate(-8deg); opacity: 0.50; }
+            100% { transform: translate3d(20px, 440px, 0) rotate(10deg); opacity: 0; }
+        }
+
+        @keyframes floatDrift3 {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.3; }
+            30%  { transform: translate3d(70px, -60px, 0) rotate(20deg); opacity: 0.70; }
+            60%  { transform: translate3d(-60px, -140px, 0) rotate(-15deg); opacity: 0.60; }
+            100% { transform: translate3d(40px, -240px, 0) rotate(25deg); opacity: 0; }
+        }
+
+        @keyframes floatDrift4 {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.15; }
+            35%  { transform: translate3d(-40px, 70px, 0) rotate(-12deg); opacity: 0.55; }
+            70%  { transform: translate3d(60px, 160px, 0) rotate(16deg); opacity: 0.65; }
+            100% { transform: translate3d(-10px, 260px, 0) rotate(-6deg); opacity: 0; }
+        }
+
+        @keyframes floatDrift5 {
+            0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.4; }
+            50%  { transform: translate3d(80px, -80px, 0) rotate(18deg); opacity: 0.75; }
+            100% { transform: translate3d(-50px, -180px, 0) rotate(-12deg); opacity: 0; }
+        }
+
+        /* Accessibility: Completely stop non-essential animations when user prefers reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .ambient-item, .butterfly-flutter {
+                animation: none !important;
+                opacity: 0.25 !important;
+            }
+        }
+
+        /* ==========================================================
+           3. FOREGROUND E-COMMERCE STRUCTURE (Z-INDEX: 10)
+           ========================================================== */
+        .page-shell {
+            position: relative;
+            z-index: 10; /* Ensures full clickability and dominance over background layer */
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem 4rem;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-radius: var(--radius-btn);
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 10px 28px rgba(160, 120, 175, 0.10);
+            margin-bottom: 2rem;
+        }
+
+        .navbar-brand {
+            font-family: var(--font-serif);
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: linear-gradient(135deg, #a43878, #7751d9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-mid);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover { color: var(--primary); }
+
+        .cart-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            margin-left: 0.35rem;
+        }
+
+        /* Hero Banner */
+        .hero-section {
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            padding: 3rem;
+            margin-bottom: 3.5rem;
+            display: grid;
+            grid-template-columns: 1.25fr 0.85fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-btn);
+            background: rgba(245, 83, 168, 0.12);
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 1.2rem;
+        }
+
+        .hero-heading {
+            font-family: var(--font-serif);
+            font-size: clamp(2.4rem, 4.2vw, 3.6rem);
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--text-dark);
+            margin-bottom: 1.2rem;
+        }
+
+        .hero-heading span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            max-width: 34rem;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            text-decoration: none;
+            padding: 0.95rem 2rem;
+            border-radius: var(--radius-btn);
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 10px 24px rgba(245, 83, 168, 0.32);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px rgba(245, 83, 168, 0.42);
+        }
+
+        /* Hero Image Showcase */
+        .hero-showcase-box {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            aspect-ratio: 4 / 3;
+            background: #f0e6f2;
+        }
+
+        .hero-showcase-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .hero-showcase-box:hover img {
+            transform: scale(1.04);
+        }
+
+        /* ==========================================================
+           4. REAL-LIFE PRODUCT SECTION (NO PLACEHOLDERS)
+           - Real product images with loading="lazy"
+           - Aspect-ratio enforcement to eliminate Cumulative Layout Shift (CLS)
+           - Elegant glassmorphic card layout
+           ========================================================== */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.8rem;
+        }
+
+        .section-title {
+            font-family: var(--font-serif);
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            margin-bottom: 0.4rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .product-card {
+            background: var(--surface-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(245, 83, 168, 0.4);
+            background: var(--surface-glass-hover);
+        }
+
+        /* Image Wrapper with Fixed Aspect Ratio (Prevents Layout Shifts) */
+        .product-img-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4 / 3; /* Fixed container prevents CLS before image loads */
+            background: #f4ecf5;
+            overflow: hidden;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease, opacity 0.3s ease;
+        }
+
+        .product-card:hover .product-img {
+            transform: scale(1.06);
+        }
+
+        .product-tag {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            z-index: 2;
+        }
+
+        .product-body {
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .product-title {
+            font-family: var(--font-serif);
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            margin-bottom: 0.45rem;
+        }
+
+        .product-desc {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.55;
+            margin-bottom: 1.2rem;
+            flex-grow: 1;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(130, 95, 140, 0.12);
+            padding-top: 1rem;
+        }
+
+        .product-price {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+
+        .product-price small {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .btn-customize {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(245, 83, 168, 0.12);
+            color: var(--primary);
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-btn);
+            font-weight: 700;
+            font-size: 0.88rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-customize:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 6px 16px rgba(245, 83, 168, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 860px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                padding: 2rem 1.5rem;
+                text-align: center;
+            }
+            .hero-desc {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .navbar-nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================
+         1. ULTRA-PERFORMANT FLOATING BACKGROUND LAYER
+         - Zero JavaScript calculation on every frame
+         - 24 well-dispersed, non-overlapping spring elements
+         - 100% GPU composited transforms: translate3d
+         - will-change: transform, opacity
+         - pointer-events: none (completely transparent to mouse events)
+         ================================================================ -->
+    <div class="ambient-motion-layer" id="ambient-layer" aria-hidden="true">
+        <!-- Floating Spring Petals & Flowers (🌸, 🌺, 🍃) -->
+        <div class="ambient-item float-path-1" style="top: 4%;  left: 6%;  font-size: 26px; animation-delay: -2s;">🌸</div>
+        <div class="ambient-item float-path-2" style="top: 12%; left: 88%; font-size: 30px; animation-delay: -5s;">🌸</div>
+        <div class="ambient-item float-path-4" style="top: 24%; left: 22%; font-size: 22px; animation-delay: -8s;">🌸</div>
+        <div class="ambient-item float-path-1" style="top: 38%; left: 94%; font-size: 28px; animation-delay: -12s;">🌺</div>
+        <div class="ambient-item float-path-2" style="top: 55%; left: 8%;  font-size: 24px; animation-delay: -4s;">🌸</div>
+        <div class="ambient-item float-path-4" style="top: 68%; left: 86%; font-size: 26px; animation-delay: -9s;">🌸</div>
+        <div class="ambient-item float-path-1" style="top: 82%; left: 16%; font-size: 28px; animation-delay: -14s;">🌺</div>
+        <div class="ambient-item float-path-2" style="top: 90%; left: 78%; font-size: 22px; animation-delay: -1s;">🍃</div>
+        <div class="ambient-item float-path-4" style="top: 48%; left: 52%; font-size: 20px; animation-delay: -7s;">🍃</div>
+
+        <!-- Fluttering Butterflies with 3D Wing Animation (🦋) -->
+        <div class="ambient-item float-path-3" style="top: 8%;  left: 38%; font-size: 32px; animation-delay: -3s;"><span class="butterfly-flutter">🦋</span></div>
+        <div class="ambient-item float-path-5" style="top: 28%; left: 80%; font-size: 26px; animation-delay: -7s;"><span class="butterfly-flutter">🦋</span></div>
+        <div class="ambient-item float-path-3" style="top: 62%; left: 28%; font-size: 30px; animation-delay: -11s;"><span class="butterfly-flutter">🦋</span></div>
+        <div class="ambient-item float-path-5" style="top: 75%; left: 68%; font-size: 24px; animation-delay: -15s;"><span class="butterfly-flutter">🦋</span></div>
+
+        <!-- Cute Gifting Accents (🐝, ✨, 🎀, ⭐) -->
+        <div class="ambient-item float-path-2" style="top: 18%; left: 64%; font-size: 22px; animation-delay: -6s;">🐝</div>
+        <div class="ambient-item float-path-1" style="top: 72%; left: 42%; font-size: 24px; animation-delay: -10s;">🐝</div>
+        <div class="ambient-item float-path-4" style="top: 15%; left: 14%; font-size: 22px; animation-delay: -3s;">✨</div>
+        <div class="ambient-item float-path-2" style="top: 32%; left: 35%; font-size: 18px; animation-delay: -9s;">✨</div>
+        <div class="ambient-item float-path-4" style="top: 42%; left: 74%; font-size: 20px; animation-delay: -13s;">✨</div>
+        <div class="ambient-item float-path-1" style="top: 86%; left: 62%; font-size: 24px; animation-delay: -4s;">✨</div>
+        <div class="ambient-item float-path-2" style="top: 6%;  left: 78%; font-size: 26px; animation-delay: -1s;">🎀</div>
+        <div class="ambient-item float-path-4" style="top: 50%; left: 12%; font-size: 25px; animation-delay: -11s;">🎀</div>
+        <div class="ambient-item float-path-1" style="top: 94%; left: 90%; font-size: 22px; animation-delay: -7s;">🎀</div>
+        <div class="ambient-item float-path-2" style="top: 60%; left: 60%; font-size: 18px; animation-delay: -16s;">⭐</div>
+        <div class="ambient-item float-path-4" style="top: 30%; left: 3%;  font-size: 20px; animation-delay: -5s;">⭐</div>
+    </div>
+
+    <!-- ================================================================
+         2. FOREGROUND E-COMMERCE STOREFRONT
+         ================================================================ -->
+    <div class="page-shell">
+        <!-- Top Navbar -->
+        <header class="navbar">
+            <a href="#" class="navbar-brand">
+                <i class="fa-solid fa-gift"></i> GLINT
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="#" class="nav-link">Home</a></li>
+                <li><a href="#gift-boxes" class="nav-link">Gift Boxes</a></li>
+                <li><a href="#" class="nav-link">Occasions</a></li>
+                <li><a href="#" class="nav-link">About Us</a></li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="fa-solid fa-shopping-bag"></i> Cart <span class="cart-badge">2</span>
+                    </a>
+                </li>
+            </ul>
+        </header>
+
+        <!-- Hero Section with Real Curated Box Image -->
+        <section class="hero-section">
+            <div class="hero-text-content">
+                <div class="eyebrow">
+                    <i class="fa-solid fa-sparkles"></i> Hand-Crafted Gifting Collection
+                </div>
+                <h1 class="hero-heading">
+                    A gift box that feels as <span>special</span> as the person receiving it.
+                </h1>
+                <p class="hero-desc">
+                    Build personalized bespoke gift boxes for birthdays, anniversaries, weddings, and every memorable moment. Curated artisan treats, personalized handwritten notes, and luxury packaging.
+                </p>
+                <a href="#gift-boxes" class="btn-primary">
+                    <span>Explore Curated Boxes</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Real-Life Hero Product Image (Lazy Loaded & Responsive) -->
+            <div class="hero-showcase-box">
+                <img 
+                    src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=700&q=80" 
+                    alt="Luxury Pastel Birthday Gift Box with ribbons and treats" 
+                    loading="lazy"
+                    decoding="async"
+                    width="600"
+                    height="450"
+                >
+            </div>
+        </section>
+
+        <!-- Product Grid with Real-Life Product Photography -->
+        <section id="gift-boxes">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Popular Curated Gift Boxes</h2>
+                    <p class="section-subtitle">Real handcrafted gift collections ready to be personalized with your choice of items.</p>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                <!-- Product 1: Birthday Bliss Box -->
+                <article class="product-card">
+                    <div class="product-img-wrapper">
+                        <span class="product-tag">🎂 Birthday</span>
+                        <img 
+                            class="product-img"
+                            src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=600&q=80" 
+                            alt="Birthday Bliss Gift Box with chocolates and scented candles"
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="300"
+                        >
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-title">Birthday Bliss Box</h3>
+                        <p class="product-desc">Artisan cocoa cake, celebratory helium balloon bouquet, handcrafted scented candle, and luxury tissue wrap.</p>
+                        <div class="product-footer">
+                            <div class="product-price">
+                                ₹698.00 <small>base + items</small>
+                            </div>
+                            <a href="#" class="btn-customize">
+                                Customize <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Product 2: Romance & Anniversary Box -->
+                <article class="product-card">
+                    <div class="product-img-wrapper">
+                        <span class="product-tag">💖 Anniversary</span>
+                        <img 
+                            class="product-img"
+                            src="https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=600&q=80" 
+                            alt="Anniversary Romance Gift Box with luxury satin ribbon and roses"
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="300"
+                        >
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-title">Anniversary Romance Box</h3>
+                        <p class="product-desc">Velvet keepsake box, premium Belgian truffles, preserved dried floral arrangement, and custom message card.</p>
+                        <div class="product-footer">
+                            <div class="product-price">
+                                ₹899.00 <small>base + items</small>
+                            </div>
+                            <a href="#" class="btn-customize">
+                                Customize <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Product 3: Celebration & Gratitude Box -->
+                <article class="product-card">
+                    <div class="product-img-wrapper">
+                        <span class="product-tag">🎉 Celebration</span>
+                        <img 
+                            class="product-img"
+                            src="https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?auto=format&fit=crop&w=600&q=80" 
+                            alt="Celebration & Gratitude Gift Box with treats and accessories"
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="300"
+                        >
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-title">Celebration Surprise Box</h3>
+                        <p class="product-desc">Gourmet roasted almond cookies, luxury brass bookmark, bath salts, and ribbon-tied gift hamper.</p>
+                        <div class="product-footer">
+                            <div class="product-price">
+                                ₹749.00 <small>base + items</small>
+                            </div>
+                            <a href="#" class="btn-customize">
+                                Customize <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Product 4: Little Angel Baby Shower Box -->
+                <article class="product-card">
+                    <div class="product-img-wrapper">
+                        <span class="product-tag">🍼 Baby Shower</span>
+                        <img 
+                            class="product-img"
+                            src="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80" 
+                            alt="Little Angel Baby Shower Pastel Gift Box with organic soft cotton"
+                            loading="lazy"
+                            decoding="async"
+                            width="400"
+                            height="300"
+                        >
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-title">Little Angel Baby Box</h3>
+                        <p class="product-desc">Pure organic cotton bibs, soothing baby balm, hand-knitted rattle, and sweet congratulations keepsake note.</p>
+                        <div class="product-footer">
+                            <div class="product-price">
+                                ₹620.00 <small>base + items</small>
+                            </div>
+                            <a href="#" class="btn-customize">
+                                Customize <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </div>
+
+    <!-- ================================================================
+         3. LEAN PERFORMANCE LIFECYCLE CONTROLLER
+         - Automatically pauses animations when tab is hidden to save 100% CPU/battery
+         - Zero runtime frame thrashing
+         ================================================================ -->
+    <script>
+        (function() {
+            const ambientLayer = document.getElementById('ambient-layer');
+            if (!ambientLayer) return;
+
+            // Pause animations when user switches tabs or minimizes browser
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    ambientLayer.style.animationPlayState = 'paused';
+                    const items = ambientLayer.querySelectorAll('.ambient-item, .butterfly-flutter');
+                    items.forEach(el => el.style.animationPlayState = 'paused');
+                } else {
+                    ambientLayer.style.animationPlayState = 'running';
+                    const items = ambientLayer.querySelectorAll('.ambient-item, .butterfly-flutter');
+                    items.forEach(el => el.style.animationPlayState = 'running');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

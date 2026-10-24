@@ -1175,3 +1175,372 @@ textarea.form-control {
     color: var(--text-dark);
     font-weight: 500;
 }
+
+/* ===============================================================
+   ULTRA-OPTIMIZED GPU FLOATING BACKGROUND & REAL PRODUCT IMAGES
+   =============================================================== */
+
+/* 1. Strictly Pointer-Events None & Background Isolated (Z-Index: 0) */
+.ambient-motion-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none !important;
+    z-index: 0 !important;
+    overflow: hidden;
+    contain: strict;
+}
+
+.ambient-item {
+    position: absolute;
+    user-select: none;
+    pointer-events: none;
+    will-change: transform, opacity;
+    opacity: 0.55;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+}
+
+.butterfly-flutter {
+    display: inline-block;
+    transform-origin: center;
+    animation: wingTick 0.36s ease-in-out infinite alternate;
+}
+
+@keyframes wingTick {
+    0% { transform: scaleX(1) rotate(0deg); }
+    100% { transform: scaleX(0.42) rotate(4deg); }
+}
+
+/* Hardware-Composited Pure CSS Paths (Different primes avoid sync) */
+.float-path-1 { animation: floatDrift1 18s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.float-path-2 { animation: floatDrift2 23s cubic-bezier(0.35, 0, 0.25, 1) infinite; }
+.float-path-3 { animation: floatDrift3 27s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.float-path-4 { animation: floatDrift4 21s cubic-bezier(0.35, 0, 0.25, 1) infinite; }
+.float-path-5 { animation: floatDrift5 25s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+@keyframes floatDrift1 {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.2; }
+    25%  { transform: translate3d(60px, 80px, 0) rotate(15deg); opacity: 0.65; }
+    50%  { transform: translate3d(-40px, 180px, 0) rotate(-10deg); opacity: 0.55; }
+    75%  { transform: translate3d(50px, 290px, 0) rotate(18deg); opacity: 0.70; }
+    100% { transform: translate3d(0, 400px, 0) rotate(-5deg); opacity: 0; }
+}
+
+@keyframes floatDrift2 {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+    20%  { transform: translate3d(-50px, 90px, 0) rotate(-14deg); opacity: 0.60; }
+    50%  { transform: translate3d(45px, 200px, 0) rotate(12deg); opacity: 0.75; }
+    80%  { transform: translate3d(-30px, 320px, 0) rotate(-8deg); opacity: 0.50; }
+    100% { transform: translate3d(20px, 440px, 0) rotate(10deg); opacity: 0; }
+}
+
+@keyframes floatDrift3 {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.3; }
+    30%  { transform: translate3d(70px, -60px, 0) rotate(20deg); opacity: 0.70; }
+    60%  { transform: translate3d(-60px, -140px, 0) rotate(-15deg); opacity: 0.60; }
+    100% { transform: translate3d(40px, -240px, 0) rotate(25deg); opacity: 0; }
+}
+
+@keyframes floatDrift4 {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.15; }
+    35%  { transform: translate3d(-40px, 70px, 0) rotate(-12deg); opacity: 0.55; }
+    70%  { transform: translate3d(60px, 160px, 0) rotate(16deg); opacity: 0.65; }
+    100% { transform: translate3d(-10px, 260px, 0) rotate(-6deg); opacity: 0; }
+}
+
+@keyframes floatDrift5 {
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0.4; }
+    50%  { transform: translate3d(80px, -80px, 0) rotate(18deg); opacity: 0.75; }
+    100% { transform: translate3d(-50px, -180px, 0) rotate(-12deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ambient-item, .butterfly-flutter {
+        animation: none !important;
+        opacity: 0.25 !important;
+    }
+}
+
+/* 2. Real-Life Product Photography Display (CLS Free) */
+.popular-card__img-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #f4ecf5;
+    overflow: hidden;
+}
+
+.popular-card__real-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+
+.popular-card:hover .popular-card__real-img {
+    transform: scale(1.05);
+}
+
+/* 3. Hero Sparkles & Lively Accents */
+.hero-sparkles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.hero-sparkle {
+    position: absolute;
+    color: var(--rose-400);
+    opacity: 0.6;
+    animation: twinkleSparkle 3.5s ease-in-out infinite;
+}
+
+.hs-1 { top: 15%; left: 12%; font-size: 1.4rem; animation-delay: 0s; }
+.hs-2 { top: 70%; left: 8%;  font-size: 1.8rem; animation-delay: 1.2s; color: var(--lavender-400); }
+.hs-3 { top: 25%; right: 10%; font-size: 1.6rem; animation-delay: 0.7s; color: #ffd166; }
+.hs-4 { bottom: 12%; right: 28%; font-size: 1.3rem; animation-delay: 2s; }
+
+@keyframes twinkleSparkle {
+    0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.2; }
+    50% { transform: scale(1.3) rotate(90deg); opacity: 0.85; filter: drop-shadow(0 0 6px rgba(255, 112, 183, 0.6)); }
+}
+
+/* Eyebrow Pulsar Dot */
+.eyebrow-pulsar {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--rose-500);
+    margin-right: 0.5rem;
+    box-shadow: 0 0 0 rgba(255, 112, 183, 0.4);
+    animation: pulsarRing 2s infinite;
+}
+
+@keyframes pulsarRing {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 112, 183, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 112, 183, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 112, 183, 0); }
+}
+
+/* Text Gradient Shimmer */
+.shimmer-text {
+    background: linear-gradient(135deg, #f553a8 0%, #a272ff 50%, #ff8ec8 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: textShine 4s linear infinite;
+}
+
+@keyframes textShine {
+    to { background-position: 200% center; }
+}
+
+/* Primary CTA Button Pulse & Sheen */
+.btn-animated-pulse {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(245, 83, 168, 0.35);
+    animation: ctaBreath 3.5s ease-in-out infinite alternate;
+}
+
+.btn-animated-pulse::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: rotate(25deg);
+    animation: buttonSheen 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes ctaBreath {
+    0% { box-shadow: 0 8px 20px rgba(245, 83, 168, 0.25); transform: translateY(0); }
+    100% { box-shadow: 0 14px 32px rgba(245, 83, 168, 0.45); transform: translateY(-2px); }
+}
+
+@keyframes buttonSheen {
+    0%, 70% { left: -60%; }
+    100% { left: 160%; }
+}
+
+.btn-arrow-bounce {
+    transition: transform 0.25s ease;
+}
+
+.btn-animated-pulse:hover .btn-arrow-bounce {
+    transform: translateX(5px);
+}
+
+.btn-glass-hover {
+    transition: all 0.3s ease;
+}
+
+.btn-glass-hover:hover {
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(8px);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(181, 112, 174, 0.18);
+}
+
+/* 4. Showcase Cards Organic 3D Float */
+.mini-gift-card {
+    transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28), box-shadow 0.3s ease;
+    transform-style: preserve-3d;
+}
+
+.mini-gift-card--main {
+    animation: float3DMain 8s ease-in-out infinite !important;
+}
+
+.mini-gift-card--two {
+    animation: float3DTwo 9s ease-in-out infinite !important;
+    animation-delay: -2s !important;
+}
+
+.mini-gift-card--three {
+    animation: float3DThree 7.5s ease-in-out infinite !important;
+    animation-delay: -4s !important;
+}
+
+@keyframes float3DMain {
+    0% { transform: translateY(12px) rotate(-7deg); }
+    50% { transform: translateY(-14px) rotate(-4deg); }
+    100% { transform: translateY(12px) rotate(-7deg); }
+}
+
+@keyframes float3DTwo {
+    0% { transform: translateY(-6px) rotate(7deg); }
+    50% { transform: translateY(16px) rotate(10deg); }
+    100% { transform: translateY(-6px) rotate(7deg); }
+}
+
+@keyframes float3DThree {
+    0% { transform: translateY(16px) rotate(-9deg); }
+    50% { transform: translateY(-10px) rotate(-6deg); }
+    100% { transform: translateY(16px) rotate(-9deg); }
+}
+
+.mini-gift-card:hover {
+    box-shadow: 0 26px 50px rgba(181, 112, 174, 0.4) !important;
+}
+
+.mini-gift-card:hover .animated-icon {
+    transform: scale(1.22) rotate(10deg);
+}
+
+.animated-icon {
+    display: inline-block;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: emojiSway 4s ease-in-out infinite alternate;
+}
+
+@keyframes emojiSway {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-4px) rotate(5deg); }
+    100% { transform: translateY(0) rotate(-4deg); }
+}
+
+.card-glow-ring {
+    position: absolute;
+    inset: -2px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* 5. Metric Pill Hover & Number Highlights */
+.counter-highlight {
+    background: linear-gradient(135deg, #342333 0%, #7e66f6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.metric-pill {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.metric-pill:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(181, 112, 174, 0.16);
+    border-color: rgba(239, 123, 184, 0.45);
+}
+
+/* 6. Moment & Popular Cards Micro-Interactions */
+.moment-card {
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+.moment-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 20px 40px rgba(181, 112, 174, 0.22) !important;
+    border-color: rgba(239, 123, 184, 0.6) !important;
+}
+
+.moment-card:hover .moment-card__art > span {
+    transform: scale(1.18) rotate(8deg);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.popular-card {
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease !important;
+}
+
+.popular-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 24px 48px rgba(181, 112, 174, 0.24) !important;
+}
+
+.popular-card:hover .popular-card__art > span {
+    transform: scale(1.2) rotate(-8deg);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.process-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.process-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(160, 122, 194, 0.18);
+}
+
+.process-card:hover .process-card__number {
+    transform: scale(1.1);
+    color: var(--rose-600);
+}
+
+.process-card__number {
+    transition: transform 0.25s ease, color 0.25s ease;
+}
+
+/* 7. Interactive Floating Sparkle on Mouse Move */
+.interactive-sparkle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    user-select: none;
+    animation: sparkleFade 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes sparkleFade {
+    0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(1.3) rotate(180deg);
+    }
+}

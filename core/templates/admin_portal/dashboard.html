@@ -70,9 +70,9 @@
             <div class="row g-3 mb-4">
                 <div class="col-6 col-md-3">
                     <div class="kpi-card">
-                        <span class="text-muted small fw-bold d-block mb-1">TOTAL REVENUE</span>
+                        <span class="text-muted small fw-bold d-block mb-1">PAID REVENUE</span>
                         <h3 class="fw-bold text-primary mb-0">₹{{ total_revenue }}</h3>
-                        <small class="text-success fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i> Lifetime</small>
+                        <small class="text-success fw-bold"><i class="fa-solid fa-arrow-trend-up me-1"></i> Selected date range</small>
                     </div>
                 </div>
 
@@ -80,7 +80,7 @@
                     <div class="kpi-card">
                         <span class="text-muted small fw-bold d-block mb-1">TOTAL ORDERS</span>
                         <h3 class="fw-bold text-dark mb-0">{{ total_orders }}</h3>
-                        <small class="text-muted">Processed orders</small>
+                        <small class="text-muted">Selected date range</small>
                     </div>
                 </div>
 
@@ -232,6 +232,8 @@
 <script>
     window.occasionLabels = JSON.parse('{{ occasion_labels_json|escapejs }}');
     window.occasionValues = JSON.parse('{{ occasion_values_json|escapejs }}');
+    window.monthlyLabels = JSON.parse('{{ monthly_labels_json|escapejs }}');
+    window.monthlyValues = JSON.parse('{{ monthly_values_json|escapejs }}');
 </script>
 <script src="{% static 'js/analytics.js' %}"></script>
 {% endblock %}

@@ -67,7 +67,7 @@
                     <div class="mb-3 form-check auth-check">
                         {{ form.terms_agreed }}
                         <label class="form-check-label small" for="id_terms_agreed">
-                            I agree to the <a href="#" class="auth-link">Terms of Service</a> and <a href="#" class="auth-link">Privacy Policy</a>.
+                            I agree to the <a href="{% url 'terms_of_service' %}" class="auth-link">Terms of Service</a> and <a href="{% url 'privacy_policy' %}" class="auth-link">Privacy Policy</a>.
                         </label>
                     </div>
 

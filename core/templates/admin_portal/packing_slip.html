@@ -47,7 +47,7 @@
                 <p class="small mb-0">
                     Payment Method: {{ order.get_payment_method_display }}<br>
                     Tracking ID: {{ order.tracking_number|default:"(Pending assignment)" }}<br>
-                    {% if order.delivery_date %}Delivery By: <b></b>{% endif %}
+                    {% if order.delivery_date %}Delivery By: <b>{{ order.delivery_date|date:"Y-m-d" }}</b>{% endif %}
                 </p>
             </div>
         </div>
@@ -72,8 +72,8 @@
                             {% if item.personalization_message %}
                                 <span class="small fst-italic">Card Message: "{{ item.personalization_message }}"</span><br>
                             {% endif %}
-                            {% if item.personalization_instructions %}
-                                <span class="small text-danger"><b>Note:</b> </span>
+                            {% if item.special_instructions %}
+                                <span class="small text-danger"><b>Note:</b> {{ item.special_instructions }}</span>
                             {% endif %}
                         </td>
                         <td class="small">
@@ -92,7 +92,7 @@
         {% if order.internal_notes %}
             <div class="p-3 bg-light border rounded mb-3">
                 <h6 class="fw-bold mb-1">Staff Fulfillment Notes:</h6>
-                <p class="small mb-0"></p>
+                <p class="small mb-0">{{ order.internal_notes }}</p>
             </div>
         {% endif %}
 

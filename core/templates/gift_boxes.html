@@ -29,7 +29,7 @@
 <!-- Filter & Search -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{% url 'gift_boxes' %}" class="row g-3 align-items-center">
+        <form method="GET" action="{% if current_occasion %}{% url 'gift_boxes_by_event' current_occasion.pk %}{% else %}{% url 'gift_boxes' %}{% endif %}" class="row g-3 align-items-center">
             <div class="col-md-5">
                 <input type="text" name="query" value="{{ query }}" class="form-control"
                        placeholder="Search by box name, chocolate, roses, pen...">
@@ -46,10 +46,9 @@
             </div>
             <div class="col-md-3">
                 <select name="sort" class="form-select" onchange="this.form.submit()">
-                    <option value="popular" {% if selected_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="name" {% if selected_sort == 'name' or not selected_sort %}selected{% endif %}>Name (A-Z)</option>
                     <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
                     <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-                    <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
                 </select>
             </div>
         </form>
@@ -95,14 +94,25 @@
         {% for box in gift_boxes %}
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100">
-                    {% if box.image_url %}
-                        <img src="{{ box.image_url }}" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;"
-                             onerror="this.src='https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&auto=format&fit=crop&q=80'">
-                    {% else %}
-                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                            <span class="fs-1">{{ box.emoji }}</span>
-                        </div>
-                    {% endif %}
+                   {% if box.image %}
+    <img src="{{ box.image.url }}" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == 'Anniversary' %}
+    <img src="https://images.unsplash.com/photo-1512909006721-3d6018887383?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == 'Baby Shower' %}
+    <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == 'Birthday' %}
+    <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == 'Christmas & Holidays' %}
+    <img src="https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == 'Graduation' %}
+    <img src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == "Mother's Day" %}
+    <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% elif box.event.name == "Valentine's Day" %}
+    <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% else %}
+    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80" alt="{{ box.name }}" class="card-img-top" style="height: 200px; object-fit: cover;" loading="lazy" decoding="async">
+{% endif %}
                     <div class="card-body d-flex flex-column">
                         <span class="badge bg-secondary mb-2 align-self-start">{{ box.event.name }}</span>
                         <h5 class="card-title">{{ box.name }}</h5>

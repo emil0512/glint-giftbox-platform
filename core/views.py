@@ -1,7 +1,7 @@
 import csv
 import json
 import logging
-import random
+import secrets
 import string
 from decimal import Decimal
 from decimal import InvalidOperation
@@ -26,6 +26,12 @@ from django.db.models import Count, F, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.utils.html import escape
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .models import (
     UserProfile, EventOccasion, Category, GiftBox, BoxItem, CatalogAssignment,
@@ -68,12 +74,17 @@ def log_admin_action(user, msg, request=None):
     )
 
 
-def send_order_status_email(order, old_status):
-    if old_status == order.order_status:
+def send_order_status_email(order, old_status, old_tracking_number=None):
+    status_changed = old_status != order.order_status
+    tracking_changed = old_tracking_number is not None and old_tracking_number != order.tracking_number
+    if not status_changed and not tracking_changed:
         return
     try:
         send_mail(
-            subject=f'Order {order.order_number} update',
+            subject=(
+                f'Order {order.order_number} update'
+                if status_changed else f'Tracking details for order {order.order_number}'
+            ),
             message=(
                 f'Your order status is now {order.get_order_status_display()}.\n'
                 f'Tracking number: {order.tracking_number or "Not assigned yet"}\n'
@@ -303,13 +314,17 @@ def register(request):
     else:
         form = RegisterForm()
 
-    return render(request, 'register.html', {'form': form, 'next': request.GET.get('next', '')})
+    return render(request, 'register.html', {
+        'form': form,
+        'next': request.GET.get('next') or request.POST.get('next', ''),
+    })
 
 
 def user_login(request):
     if request.user.is_authenticated:
         return redirect('home')
 
+    next_url = request.GET.get('next') or request.POST.get('next', '')
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -330,7 +345,7 @@ def user_login(request):
                 
                 if attempts >= 5:
                     messages.error(request, '🔒 Account locked! 5 consecutive failed login attempts. Please try again after 15 minutes or click "Forgot Password".')
-                    return render(request, 'login.html', {'form': form})
+                    return render(request, 'login.html', {'form': form, 'next': next_url})
 
                 authenticated_user = authenticate(request, username=target_user.username, password=password)
                 if authenticated_user:
@@ -367,7 +382,7 @@ def user_login(request):
     else:
         form = LoginForm()
 
-    return render(request, 'login.html', {'form': form, 'next': request.GET.get('next', '')})
+    return render(request, 'login.html', {'form': form, 'next': next_url})
 
 
 @require_POST
@@ -387,15 +402,19 @@ def forgot_password(request):
         email = form.cleaned_data['email']
         user = User.objects.filter(email__iexact=email).first()
 
-        # Generate 6-digit OTP
-        otp = ''.join(random.choices(string.digits, k=6))
+        if not user:
+            messages.success(
+                request,
+                'If an account exists for that email, password reset instructions will be sent.',
+            )
+            return redirect('forgot_password')
 
-        # Store in session with expiry metadata
+        otp = ''.join(secrets.choice(string.digits) for _ in range(6))
         request.session['password_reset_otp'] = otp
         request.session['password_reset_email'] = email
         request.session['password_reset_otp_at'] = timezone.now().isoformat()
+        request.session['password_reset_attempts'] = 0
 
-        # Email the OTP
         try:
             send_mail(
                 subject='Your Glint Password Reset OTP',
@@ -411,13 +430,19 @@ def forgot_password(request):
                 recipient_list=[email],
                 fail_silently=False,
             )
-        except Exception as e:
-            # In dev (console backend) the OTP is printed to terminal
-            pass
+        except Exception:
+            logger.exception('Unable to send password reset email user_id=%s', user.pk)
+            for key in (
+                'password_reset_otp', 'password_reset_email',
+                'password_reset_otp_at', 'password_reset_attempts',
+            ):
+                request.session.pop(key, None)
+            messages.error(request, 'We could not send the reset email. Please try again later.')
+            return redirect('forgot_password')
 
         messages.success(
             request,
-            f'A 6-digit OTP has been sent to {email}. Please check your inbox (or server console in dev mode).'
+            'If an account exists for that email, password reset instructions will be sent.'
         )
         return redirect('reset_password_otp')
 
@@ -448,13 +473,26 @@ def reset_password_otp(request):
             otp_at = parse_datetime(otp_at_str)
             if otp_at and (timezone.now() - otp_at).total_seconds() > 600:
                 # Clear stale session keys
-                for k in ('password_reset_otp', 'password_reset_email', 'password_reset_otp_at'):
+                for k in (
+                    'password_reset_otp', 'password_reset_email',
+                    'password_reset_otp_at', 'password_reset_attempts',
+                ):
                     request.session.pop(k, None)
                 messages.error(request, 'Your OTP has expired (valid for 10 minutes). Please request a new one.')
                 return redirect('forgot_password')
 
         stored_otp = request.session.get('password_reset_otp')
         if submitted_otp != stored_otp:
+            attempts = request.session.get('password_reset_attempts', 0) + 1
+            if attempts >= 5:
+                for key in (
+                    'password_reset_otp', 'password_reset_email',
+                    'password_reset_otp_at', 'password_reset_attempts',
+                ):
+                    request.session.pop(key, None)
+                messages.error(request, 'Too many incorrect OTP attempts. Please request a new code.')
+                return redirect('forgot_password')
+            request.session['password_reset_attempts'] = attempts
             form.add_error('otp', 'The OTP you entered is incorrect. Please try again.')
             return render(request, 'reset_password.html', {'form': form, 'masked_email': masked_email})
 
@@ -465,15 +503,34 @@ def reset_password_otp(request):
             user.set_password(new_password)
             user.save()
             cache.delete(f"login_attempts_{user.username}")
+        else:
+            for key in (
+                'password_reset_otp', 'password_reset_email',
+                'password_reset_otp_at', 'password_reset_attempts',
+            ):
+                request.session.pop(key, None)
+            messages.error(request, 'This account is no longer available. Please request a new reset link.')
+            return redirect('forgot_password')
 
         # Clear all reset session keys
-        for k in ('password_reset_otp', 'password_reset_email', 'password_reset_otp_at'):
+        for k in (
+            'password_reset_otp', 'password_reset_email',
+            'password_reset_otp_at', 'password_reset_attempts',
+        ):
             request.session.pop(k, None)
 
         messages.success(request, 'Password reset successfully! Please log in with your new password.')
         return redirect('login')
 
     return render(request, 'reset_password.html', {'form': form, 'masked_email': masked_email})
+
+
+def terms_of_service(request):
+    return render(request, 'terms_of_service.html')
+
+
+def privacy_policy(request):
+    return render(request, 'privacy_policy.html')
 
 
 # ==============================================================================
@@ -497,7 +554,7 @@ def gift_boxes(request):
     categories = Category.objects.filter(is_active=True)
 
     category_name = request.GET.get('category')
-    sort_by = request.GET.get('sort', 'popular')
+    sort_by = request.GET.get('sort', 'name')
     query = request.GET.get('query', '').strip()
 
     if category_name:
@@ -545,6 +602,8 @@ def gift_boxes_by_event(request, event_id):
     ).distinct()
 
     category_name = request.GET.get('category')
+    query = request.GET.get('query', '').strip()
+    sort_by = request.GET.get('sort', 'name')
     if category_name:
         recommended_items = recommended_items.filter(
             catalog_assignments__category__name=category_name,
@@ -559,12 +618,30 @@ def gift_boxes_by_event(request, event_id):
             | Q(available_items__pk__in=recommended_item_ids)
         ).distinct()
 
+    if query:
+        boxes = boxes.filter(
+            Q(name__icontains=query) |
+            Q(available_items__name__icontains=query)
+        ).distinct()
+
+    if sort_by == 'price_low':
+        boxes = boxes.order_by('base_price')
+    elif sort_by == 'price_high':
+        boxes = boxes.order_by('-base_price')
+    elif sort_by == 'name':
+        boxes = boxes.order_by('name')
+    else:
+        sort_by = 'name'
+        boxes = boxes.order_by('name')
+
     return render(request, 'gift_boxes.html', {
         'gift_boxes': boxes,
         'current_occasion': occasion,
         'occasions': occasions,
         'categories': categories,
         'selected_category': category_name,
+        'selected_sort': sort_by,
+        'query': query,
         'event_recommended_items': recommended_items,
     })
 
@@ -1323,6 +1400,7 @@ def profile(request):
 
     return render(request, 'profile.html', {
         'form': form,
+        'active_tab': 'account-tab' if request.method == 'POST' and form.errors else 'orders-tab',
         'orders': orders,
         'drafts': drafts,
         'status_filter': status_filter,
@@ -1341,6 +1419,142 @@ def order_detail_view(request, order_number):
         return redirect('profile')
 
     return render(request, 'order_detail.html', {'order': order})
+
+
+@login_required
+def order_invoice_pdf(request, order_number):
+    order = get_object_or_404(
+        Order.objects.prefetch_related('configurations__selections'),
+        order_number=order_number,
+    )
+    if not (order.user == request.user or request.user.is_staff):
+        messages.error(request, 'Unauthorized access to order.')
+        return redirect('profile')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = (
+        f'attachment; filename="invoice-{order.order_number}.pdf"'
+    )
+    document = SimpleDocTemplate(
+        response,
+        pagesize=A4,
+        rightMargin=18 * mm,
+        leftMargin=18 * mm,
+        topMargin=18 * mm,
+        bottomMargin=18 * mm,
+        title=f'Invoice {order.order_number}',
+        author='GLINT Personalized Gift Collection',
+    )
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='InvoiceSmall',
+        parent=styles['BodyText'],
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor('#555555'),
+    ))
+    story = [
+        Paragraph('GLINT Personalized Gift Collection', styles['Title']),
+        Paragraph('Order Invoice &amp; Receipt', styles['Heading2']),
+        Spacer(1, 5 * mm),
+    ]
+
+    metadata = [
+        ['Invoice / Order Number', escape(order.order_number)],
+        ['Order Date', order.created_at.strftime('%B %d, %Y %I:%M %p')],
+        ['Order Status', escape(order.get_order_status_display())],
+        ['Payment', (
+            f'{escape(order.get_payment_status_display())} via '
+            f'{escape(order.get_payment_method_display())}'
+        )],
+    ]
+    story.append(Table(metadata, colWidths=[44 * mm, 130 * mm], hAlign='LEFT'))
+    story.append(Spacer(1, 5 * mm))
+
+    sender = (
+        f'<b>Billed to</b><br/>{escape(order.full_name)}<br/>'
+        f'{escape(order.email)}<br/>{escape(order.phone)}'
+    )
+    delivery = (
+        f'<b>Deliver to</b><br/>{escape(order.shipping_address)}<br/>'
+        f'{escape(order.city)}, {escape(order.state)} {escape(order.postal_code)}'
+    )
+    story.append(Table(
+        [[Paragraph(sender, styles['BodyText']), Paragraph(delivery, styles['BodyText'])]],
+        colWidths=[87 * mm, 87 * mm],
+        hAlign='LEFT',
+    ))
+    story.append(Spacer(1, 7 * mm))
+
+    item_rows = [[
+        Paragraph('<b>Gift box and personalization</b>', styles['InvoiceSmall']),
+        Paragraph('<b>Qty</b>', styles['InvoiceSmall']),
+        Paragraph('<b>Unit Price</b>', styles['InvoiceSmall']),
+        Paragraph('<b>Total</b>', styles['InvoiceSmall']),
+    ]]
+    for item in order.configurations.all():
+        details = [f'<b>{escape(item.box_name)}</b>']
+        if item.personalization_name:
+            details.append(f'Recipient: {escape(item.personalization_name)}')
+        if item.personalization_message:
+            details.append(f'Message: {escape(item.personalization_message)}')
+        selections = [
+            f'{escape(selection.item_name)} ({selection.quantity} x '
+            f'INR {selection.unit_price:,.2f})'
+            for selection in item.selections.all()
+        ]
+        if selections:
+            details.append('Selected items: ' + ', '.join(selections))
+        item_rows.append([
+            Paragraph('<br/>'.join(details), styles['InvoiceSmall']),
+            str(item.quantity),
+            f'INR {item.unit_price:,.2f}',
+            f'INR {item.total_price:,.2f}',
+        ])
+
+    items_table = Table(
+        item_rows,
+        colWidths=[90 * mm, 14 * mm, 34 * mm, 34 * mm],
+        repeatRows=1,
+        hAlign='LEFT',
+    )
+    items_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1edf4')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d9d2df')),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+    ]))
+    story.extend([items_table, Spacer(1, 5 * mm)])
+
+    totals = [
+        ['Subtotal', f'INR {order.subtotal:,.2f}'],
+        ['Tax', f'INR {order.tax_amount:,.2f}'],
+        ['Shipping', 'FREE' if order.shipping_amount == 0 else f'INR {order.shipping_amount:,.2f}'],
+        ['Grand Total', f'INR {order.grand_total:,.2f}'],
+    ]
+    totals_table = Table(totals, colWidths=[45 * mm, 45 * mm], hAlign='RIGHT')
+    totals_table.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('LINEABOVE', (0, -1), (-1, -1), 1, colors.HexColor('#473050')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.extend([
+        totals_table,
+        Spacer(1, 8 * mm),
+        Paragraph(
+            'Thank you for ordering with GLINT. This application simulates '
+            'payment; no real payment was collected.',
+            styles['InvoiceSmall'],
+        ),
+    ])
+    document.build(story)
+    return response
 
 
 @login_required
@@ -1374,14 +1588,25 @@ def admin_dashboard(request):
     """Admin Analytics & KPI Dashboard with Chart.js support."""
     orders, start_date, end_date = apply_order_date_filters(Order.objects.all(), request)
     total_orders = orders.count()
-    paid_orders = orders.filter(payment_status='paid').prefetch_related('configurations__selections')
-    total_revenue = sum(
-        (order.grand_total for order in paid_orders),
-        Decimal('0.00'),
+    paid_orders = list(
+        orders.filter(payment_status='paid').prefetch_related('configurations__selections')
     )
+    total_revenue = Decimal('0.00')
+    monthly_revenue = {}
+    for order in paid_orders:
+        total_revenue += order.grand_total
+        month_key = order.created_at.strftime('%Y-%m')
+        if month_key not in monthly_revenue:
+            monthly_revenue[month_key] = {
+                'label': order.created_at.strftime('%b %Y'),
+                'total': Decimal('0.00'),
+            }
+        monthly_revenue[month_key]['total'] += order.grand_total
+
     total_customers = User.objects.filter(is_staff=False).count()
-    paid_order_count = paid_orders.count()
+    paid_order_count = len(paid_orders)
     aov = (total_revenue / paid_order_count) if paid_order_count > 0 else Decimal('0.00')
+    paid_order_ids = [order.pk for order in paid_orders]
 
     # Status Breakdown
     status_counts = orders.values('order_status').annotate(count=Count('id'))
@@ -1390,7 +1615,7 @@ def admin_dashboard(request):
     # Revenue by Occasion
     ordered_configurations = BoxConfiguration.objects.filter(
         status=BoxConfiguration.ORDERED,
-        order__in=orders.values('pk'),
+        order_id__in=paid_order_ids,
     ).prefetch_related('selections')
     occasion_totals = {}
     box_totals = {}
@@ -1417,12 +1642,12 @@ def admin_dashboard(request):
 
     recent_orders = orders.order_by('-created_at')[:8]
     top_items = BoxSelection.objects.filter(
-        configuration__order__in=orders.values('pk'),
+        configuration__order_id__in=paid_order_ids,
     ).values(item_name=F('item_name_at_order')).annotate(
         total_sold=Sum(F('quantity') * F('configuration__quantity')),
     ).order_by('-total_sold')[:5]
     top_categories = BoxSelection.objects.filter(
-        configuration__order__in=orders.values('pk'),
+        configuration__order_id__in=paid_order_ids,
         box_item__catalog_assignments__category__isnull=False,
     ).values(
         'box_item__catalog_assignments__category__name',
@@ -1433,6 +1658,10 @@ def admin_dashboard(request):
     # Chart data formatting for Chart.js
     occasion_labels = [item['gift_box__event__name'] or 'Custom' for item in occasion_sales]
     occasion_values = [float(item['total'] or 0) for item in occasion_sales]
+    monthly_revenue = [
+        monthly_revenue[month]
+        for month in sorted(monthly_revenue)
+    ]
 
     return render(request, 'admin_portal/dashboard.html', {
         'total_orders': total_orders,
@@ -1446,6 +1675,8 @@ def admin_dashboard(request):
         'top_categories': top_categories,
         'occasion_labels_json': json.dumps(occasion_labels),
         'occasion_values_json': json.dumps(occasion_values),
+        'monthly_labels_json': json.dumps([item['label'] for item in monthly_revenue]),
+        'monthly_values_json': json.dumps([float(item['total']) for item in monthly_revenue]),
         'start_date': start_date,
         'end_date': end_date,
     })
@@ -1629,9 +1860,9 @@ def admin_orders_list(request):
     if query:
         orders = orders.filter(
             Q(order_number__icontains=query) |
-            Q(full_name__icontains=query) |
-            Q(email__icontains=query) |
-            Q(phone__icontains=query)
+            Q(contact_full_name__icontains=query) |
+            Q(contact_email__icontains=query) |
+            Q(contact_phone__icontains=query)
         )
 
     orders, start_date, end_date = apply_order_date_filters(orders, request)
@@ -1655,6 +1886,7 @@ def admin_order_detail(request, order_number):
                     Order.objects.select_for_update(), order_number=order_number,
                 )
                 old_status = order.order_status
+                old_tracking_number = order.tracking_number
                 new_status = form.cleaned_data['order_status']
                 if old_status == 'cancelled' and new_status != 'cancelled':
                     form.add_error('order_status', 'A cancelled order cannot be reopened.')
@@ -1671,7 +1903,9 @@ def admin_order_detail(request, order_number):
                         f"Updated Order #{order.order_number} to {order.order_status}",
                         request,
                     )
-                    transaction.on_commit(lambda: send_order_status_email(order, old_status))
+                    transaction.on_commit(
+                        lambda: send_order_status_email(order, old_status, old_tracking_number)
+                    )
                     messages.success(request, f"Order #{order.order_number} updated.")
                     return redirect('admin_order_detail', order_number=order.order_number)
     else:

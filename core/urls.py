@@ -29,6 +29,7 @@ urlpatterns = [
     # Customer Profile & Orders
     path('profile/', views.profile, name='profile'),
     path('order/<str:order_number>/', views.order_detail_view, name='order_detail'),
+    path('order/<str:order_number>/invoice.pdf', views.order_invoice_pdf, name='order_invoice_pdf'),
     path('order/<str:order_number>/cancel/', views.cancel_customer_order, name='cancel_order'),
 
     # Authentication
@@ -38,6 +39,8 @@ urlpatterns = [
     path('logout/', views.user_logout, name='logout'),
     path('forgot-password/', views.forgot_password, name='forgot_password'),
     path('reset-password/', views.reset_password_otp, name='reset_password_otp'),
+    path('terms/', views.terms_of_service, name='terms_of_service'),
+    path('privacy/', views.privacy_policy, name='privacy_policy'),
 
     # Custom Admin Portal
     path('admin-portal/', views.admin_dashboard, name='admin_dashboard'),

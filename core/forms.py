@@ -118,7 +118,7 @@ class RegisterForm(forms.Form):
         required=True,
         validators=[name_validator],
         widget=forms.TextInput(attrs={
-            'placeholder': 'Your Full Name (e.g. Priya Sharma)',
+            'placeholder': 'Your full name',
             'class': 'form-control-custom',
             'autocomplete': 'name',
         })
@@ -200,7 +200,8 @@ class LoginForm(forms.Form):
     )
     remember_me = forms.BooleanField(
         required=False,
-        initial=False
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
     )
 
     def clean_username_or_email(self):
@@ -221,10 +222,7 @@ class ForgotPasswordRequestForm(forms.Form):
     )
 
     def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip().lower()
-        if not User.objects.filter(email__iexact=email).exists():
-            raise ValidationError('No registered account found with this email address.')
-        return email
+        return self.cleaned_data.get('email', '').strip().lower()
 
 
 class VerifyOtpAndResetPasswordForm(forms.Form):

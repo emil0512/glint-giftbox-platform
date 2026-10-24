@@ -224,7 +224,7 @@ class GlintCustomizer {
             } else {
                 this.previewItemsContainer.innerHTML = selectedList.map(item => `
                     <span class="preview-pill">
-                        ${item.emoji} ${item.name} ${item.qty > 1 ? `<b>(${item.qty}x)</b>` : ''}
+                        ${item.emoji ? `${item.emoji} ` : ''}${item.name} ${item.qty > 1 ? `<b>(${item.qty}x)</b>` : ''}
                     </span>
                 `).join('');
             }
@@ -262,7 +262,7 @@ class GlintCustomizer {
                 </div>
                 ${selectedList.map(it => `
                     <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span>${it.emoji} ${it.name} <small class="text-muted">(${it.qty}x @ ₹${it.price.toFixed(2)})</small></span>
+                        <span>${it.emoji ? `${it.emoji} ` : ''}${it.name} <small class="text-muted">(${it.qty}x @ ₹${it.price.toFixed(2)})</small></span>
                         <span class="fw-bold text-dark">₹${(it.price * it.qty).toFixed(2)}</span>
                     </div>
                 `).join('')}

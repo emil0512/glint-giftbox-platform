@@ -36,10 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
         new Chart(trendCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                labels: window.monthlyLabels || [],
                 datasets: [{
-                    label: 'Revenue (₹)',
-                    data: [12400, 18900, 15600, 24300, 29800, 34200, 41500, 48900],
+                    label: 'Paid revenue (₹)',
+                    data: window.monthlyValues || [],
                     borderColor: '#d45a6a',
                     backgroundColor: 'rgba(212, 90, 106, 0.12)',
                     fill: true,

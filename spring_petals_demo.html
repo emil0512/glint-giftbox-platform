@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glint - Spring Petals & Butterflies Dreamy Motion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ==========================================================
+           DREAMY PASTEL CANVAS & RESET
+           ========================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Manrope', sans-serif;
+            color: #342333;
+            background: linear-gradient(135deg, #fff7fb 0%, #f6f0ff 48%, #fff5f8 100%);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Dreamy Background Glow Orbs */
+        .ambient-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .dream-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(65px);
+            opacity: 0.45;
+            will-change: transform;
+            animation: blobPulse 18s ease-in-out infinite alternate;
+        }
+
+        .dream-blob-1 {
+            width: 460px;
+            height: 460px;
+            background: radial-gradient(circle, rgba(255, 179, 218, 0.5) 0%, rgba(255, 230, 242, 0) 70%);
+            top: -60px;
+            left: -80px;
+        }
+
+        .dream-blob-2 {
+            width: 520px;
+            height: 520px;
+            background: radial-gradient(circle, rgba(188, 168, 255, 0.45) 0%, rgba(240, 235, 255, 0) 70%);
+            top: 40%;
+            right: -120px;
+            animation-duration: 22s;
+            animation-delay: -5s;
+        }
+
+        .dream-blob-3 {
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(255, 224, 138, 0.35) 0%, rgba(255, 248, 220, 0) 70%);
+            bottom: -50px;
+            left: 25%;
+            animation-duration: 20s;
+            animation-delay: -10s;
+        }
+
+        @keyframes blobPulse {
+            0% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(45px, -35px, 0) scale(1.12); }
+            100% { transform: translate3d(-30px, 30px, 0) scale(0.95); }
+        }
+
+        /* ==========================================================
+           PETALS & BUTTERFLIES ANIMATED LAYER
+           ========================================================== */
+        #drift-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-entity {
+            position: absolute;
+            user-select: none;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+
+        /* 3D Wing Flutter for Butterflies */
+        .butterfly-wing {
+            display: inline-block;
+            transform-origin: center center;
+            animation: wingFlutter 0.38s ease-in-out infinite alternate;
+            filter: drop-shadow(0 6px 12px rgba(162, 114, 178, 0.28));
+        }
+
+        @keyframes wingFlutter {
+            0% { transform: scaleX(1) scaleY(1) rotate(0deg); }
+            50% { transform: scaleX(0.4) scaleY(1.08) rotate(4deg); }
+            100% { transform: scaleX(0.95) scaleY(0.95) rotate(-3deg); }
+        }
+
+        /* Petal Tumbling with Depth of Field */
+        .petal-soft {
+            display: inline-block;
+            filter: drop-shadow(0 4px 8px rgba(220, 140, 180, 0.2));
+            animation: petalTumble 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes petalTumble {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(18deg) scale(1.06) rotateY(25deg); }
+            100% { transform: rotate(-15deg) scale(0.94) rotateX(20deg); }
+        }
+
+        /* Gentle Bee Buzzing */
+        .bee-buzz {
+            display: inline-block;
+            animation: beeVibrate 0.18s ease-in-out infinite alternate;
+            filter: drop-shadow(0 4px 8px rgba(180, 140, 60, 0.25));
+        }
+
+        @keyframes beeVibrate {
+            0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+            100% { transform: translate3d(1px, -1.5px, 0) rotate(3deg); }
+        }
+
+        /* ==========================================================
+           HERO & GLASSMORPHIC CONTENT CARD (DEMO PREVIEW)
+           ========================================================== */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Navbar preview */
+        .demo-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.8rem;
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 12px 32px rgba(181, 132, 184, 0.12);
+            margin-bottom: 2.5rem;
+        }
+
+        .brand-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a43878, #7751d9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #5d4960;
+        }
+
+        /* Hero Showcase Card */
+        .hero-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 36px;
+            padding: 3.5rem 3rem;
+            box-shadow: 0 24px 60px rgba(180, 130, 185, 0.16);
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 3rem;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: 999px;
+            background: rgba(255, 112, 183, 0.14);
+            color: #f553a8;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1.2rem;
+            border: 1px solid rgba(245, 83, 168, 0.25);
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.4rem, 4.2vw, 3.8rem);
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.2rem;
+            color: #2b1c2b;
+        }
+
+        .hero-title em {
+            font-style: italic;
+            background: linear-gradient(135deg, #f553a8, #8c5ff8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #6d576a;
+            margin-bottom: 2rem;
+            max-width: 32rem;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 2.2rem;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ff70b7, #8e6aff);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.05rem;
+            box-shadow: 0 14px 28px rgba(245, 83, 168, 0.35);
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 20px 36px rgba(245, 83, 168, 0.45);
+        }
+
+        /* Floating Preview Gift Boxes in Hero */
+        .showcase-art {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 280px;
+        }
+
+        .box-tile {
+            width: 220px;
+            padding: 1.8rem 1.5rem;
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 248, 0.85));
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 40px rgba(181, 112, 174, 0.22);
+            text-align: center;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .box-tile:hover {
+            transform: translateY(-8px) rotate(2deg) scale(1.04);
+        }
+
+        .box-tile .icon {
+            font-size: 3.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 8px 16px rgba(160, 100, 150, 0.25));
+        }
+
+        .box-tile h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+            color: #382436;
+        }
+
+        .box-tile p {
+            font-size: 0.85rem;
+            color: #8c7288;
+        }
+
+        @media (max-width: 860px) {
+            .hero-card {
+                grid-template-columns: 1fr;
+                padding: 2.2rem 1.8rem;
+                text-align: center;
+            }
+            .hero-text {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Soft Dreamy Ambient Blur Orbs -->
+    <div class="ambient-canvas" aria-hidden="true">
+        <div class="dream-blob dream-blob-1"></div>
+        <div class="dream-blob dream-blob-2"></div>
+        <div class="dream-blob dream-blob-3"></div>
+    </div>
+
+    <!-- Container for Smooth Floating Petals, Butterflies & Motifs -->
+    <div id="drift-canvas" aria-hidden="true"></div>
+
+    <!-- Foreground Content -->
+    <main class="container">
+        <header class="demo-nav">
+            <div class="brand-logo">
+                <span>🎁</span> GLINT
+            </div>
+            <nav class="nav-links">
+                <span>Home</span>
+                <span>Gift Boxes</span>
+                <span>Occasions</span>
+                <span>Cart (0)</span>
+            </nav>
+        </header>
+
+        <section class="hero-card">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span>🌸</span> Spring Gifting Collection
+                </div>
+                <h1 class="hero-title">
+                    A gift box that feels as <em>special</em> as they are.
+                </h1>
+                <p class="hero-text">
+                    Curated pastel surprise boxes with delicate treats, personalized notes, and heartfelt touches that turn moments into memories.
+                </p>
+                <a href="#" class="hero-cta">
+                    <span>Build Your Box</span>
+                    <span>→</span>
+                </a>
+            </div>
+
+            <div class="showcase-art">
+                <div class="box-tile">
+                    <span class="icon">🎁</span>
+                    <h3>Spring Blossom</h3>
+                    <p>Curated with fresh love & warmth</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==========================================================
+         LIGHTWEIGHT, IRREGULAR SINE-WAVE MOTION SCRIPT (NO LIBS)
+         ========================================================== -->
+    <script>
+        (function() {
+            const container = document.getElementById('drift-canvas');
+            if (!container) return;
+
+            // Palette of gentle spring motifs (12 to 14 elements max to preserve breathing room)
+            const motifDefs = [
+                { type: 'butterfly', emoji: '🦋', class: 'butterfly-wing', size: 28, speed: 0.65, blur: 0, ampX: 70, ampY: 45, freq: 0.0016 },
+                { type: 'butterfly', emoji: '🦋', class: 'butterfly-wing', size: 22, speed: 0.55, blur: 0.8, ampX: 55, ampY: 35, freq: 0.0021 },
+                { type: 'petal', emoji: '🌸', class: 'petal-soft', size: 26, speed: 0.40, blur: 0, ampX: 45, ampY: 25, freq: 0.0012 },
+                { type: 'petal', emoji: '🌸', class: 'petal-soft', size: 19, speed: 0.32, blur: 1.2, ampX: 35, ampY: 20, freq: 0.0015 },
+                { type: 'petal', emoji: '🌸', class: 'petal-soft', size: 30, speed: 0.45, blur: 0, ampX: 50, ampY: 30, freq: 0.0010 },
+                { type: 'bee', emoji: '🐝', class: 'bee-buzz', size: 22, speed: 0.80, blur: 0, ampX: 80, ampY: 55, freq: 0.0028 },
+                { type: 'sparkle', emoji: '✨', class: 'petal-soft', size: 20, speed: 0.28, blur: 0, ampX: 25, ampY: 20, freq: 0.0018 },
+                { type: 'sparkle', emoji: '✨', class: 'petal-soft', size: 16, speed: 0.22, blur: 1.5, ampX: 20, ampY: 15, freq: 0.0014 },
+                { type: 'bow', emoji: '🎀', class: 'petal-soft', size: 24, speed: 0.35, blur: 0, ampX: 40, ampY: 25, freq: 0.0011 },
+                { type: 'petal2', emoji: '🌺', class: 'petal-soft', size: 23, speed: 0.38, blur: 0.5, ampX: 40, ampY: 28, freq: 0.0013 },
+                { type: 'leaf', emoji: '🍃', class: 'petal-soft', size: 21, speed: 0.42, blur: 0, ampX: 50, ampY: 30, freq: 0.0015 },
+                { type: 'star', emoji: '⭐', class: 'petal-soft', size: 16, speed: 0.25, blur: 1.0, ampX: 25, ampY: 15, freq: 0.0012 }
+            ];
+
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+
+            // Spawn elements with randomized phase offsets and gentle velocities
+            const entities = motifDefs.map((def, i) => {
+                const el = document.createElement('div');
+                el.className = 'floating-entity';
+                el.innerHTML = `<span class="${def.class}">${def.emoji}</span>`;
+                el.style.fontSize = `${def.size}px`;
+                if (def.blur > 0) el.style.filter = `blur(${def.blur}px)`;
+
+                container.appendChild(el);
+
+                // Initial evenly dispersed positions across viewport
+                return {
+                    el: el,
+                    def: def,
+                    // Starting coordinates
+                    baseX: Math.random() * screenW,
+                    baseY: Math.random() * screenH,
+                    // Natural velocity: drifting slightly downward & rightward (like a spring breeze)
+                    vx: 0.35 * def.speed + (Math.random() * 0.2),
+                    vy: 0.55 * def.speed + (Math.random() * 0.25),
+                    // Irregular wave parameters (using non-repeating primes)
+                    phaseX: Math.random() * 200,
+                    phaseY: Math.random() * 200,
+                    phaseRot: Math.random() * 360,
+                    opacityBase: def.blur > 0 ? 0.38 : 0.65,
+                    opacityAmp: 0.22,
+                    rotSpeed: (Math.random() - 0.5) * 0.08
+                };
+            });
+
+            let lastTime = performance.now();
+
+            // Smooth 60fps Animation Loop with Double-Trigonometric Paths (Soft, irregular wavy curves)
+            function animate(now) {
+                const dt = Math.min(now - lastTime, 64);
+                lastTime = now;
+
+                const currentW = window.innerWidth;
+                const currentH = window.innerHeight;
+
+                for (let i = 0; i < entities.length; i++) {
+                    const ent = entities[i];
+                    
+                    // Progress position with breeze drift
+                    ent.baseX += ent.vx * (dt * 0.06);
+                    ent.baseY += ent.vy * (dt * 0.06);
+
+                    // Multi-sine wave offsets create non-linear, loopy, wind-swirling curves
+                    const t = now * ent.def.freq;
+                    const curveX = Math.sin(t + ent.phaseX) * ent.def.ampX + Math.cos(t * 0.5 + ent.phaseY) * (ent.def.ampX * 0.4);
+                    const curveY = Math.cos(t * 0.8 + ent.phaseY) * ent.def.ampY + Math.sin(t * 0.3 + ent.phaseX) * (ent.def.ampY * 0.3);
+
+                    const posX = ent.baseX + curveX;
+                    const posY = ent.baseY + curveY;
+
+                    // Soft tilt based on curve trajectory
+                    const tilt = Math.sin(t * 1.2 + ent.phaseRot) * 18;
+
+                    // Subtle breathing opacity variation
+                    const opacity = ent.opacityBase + Math.sin(t * 0.7 + ent.phaseX) * ent.opacityAmp;
+
+                    // Apply hardware-accelerated transform only (prevents layout thrashing)
+                    ent.el.style.transform = `translate3d(${posX.toFixed(1)}px, ${posY.toFixed(1)}px, 0) rotate(${tilt.toFixed(1)}deg)`;
+                    ent.el.style.opacity = Math.max(0.18, Math.min(0.88, opacity)).toFixed(2);
+
+                    // Seamless wrap-around when exiting boundaries (soft entrance from top/left)
+                    if (posX > currentW + 60) ent.baseX = -70;
+                    if (posX < -80) ent.baseX = currentW + 50;
+                    if (posY > currentH + 60) ent.baseY = -70;
+                    if (posY < -80) ent.baseY = currentH + 50;
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+
+            // Debounced resize handler
+            window.addEventListener('resize', () => {
+                // Bounds check automatically handles screen re-orientations
+            });
+        })();
+    </script>
+</body>
+</html>

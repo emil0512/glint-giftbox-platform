@@ -21,11 +21,13 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS')
 if ALLOWED_HOSTS:
     ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS.split(',') if host.strip()]
 elif DEBUG:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '.devtunnels.ms', '.app.github.dev', '*']
 else:
     from django.core.exceptions import ImproperlyConfigured
     raise ImproperlyConfigured('ALLOWED_HOSTS must be configured when DEBUG is disabled.')
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend(['https://*.devtunnels.ms', 'https://*.app.github.dev'])
 
 # If on OpenShift, auto-trust the route host
 if os.environ.get('OPENSHIFT_APP_HOST'):
@@ -73,10 +75,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'giftbox_site.wsgi.application'
 
-# Database: PostgreSQL on OpenShift / SQLite locally
-if os.environ.get('DATABASE_URL'):
-    import dj_database_url
-    DATABASES = {'default': dj_database_url.parse(os.environ['DATABASE_URL'], conn_max_age=600)}
+# Database: PostgreSQL on Render/OpenShift / SQLite fallback
+database_url = os.environ.get('DATABASE_URL', '').strip().strip("'\"")
+if database_url:
+    # Fix accidental missing scheme if pasted without 'postgres' or 'postgresql'
+    if database_url.startswith('://'):
+        database_url = f"postgresql{database_url}"
+    elif database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+    try:
+        import dj_database_url
+        DATABASES = {'default': dj_database_url.parse(database_url, conn_max_age=600)}
+    except Exception as exc:
+        print(f"Warning: Could not parse DATABASE_URL ({exc}), falling back to SQLite.")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 elif all(k in os.environ for k in ('DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD')):
     DATABASES = {
         'default': {

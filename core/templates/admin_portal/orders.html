@@ -114,7 +114,7 @@
                                             {{ ord.order_number }}
                                         </a>
                                         {% if ord.tracking_number %}
-                                            <small class="d-block text-muted">Track: </small>
+                                            <small class="d-block text-muted">Track: {{ ord.tracking_number }}</small>
                                         {% endif %}
                                     </td>
                                     <td class="small">{{ ord.created_at|date:"M d, Y" }}</td>

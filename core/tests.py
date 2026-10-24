@@ -12,7 +12,7 @@ from django.test import override_settings
 from django.core.management import call_command
 from datetime import timedelta
 
-from core.forms import BoxItemForm
+from core.forms import BoxItemForm, CheckoutForm, RegisterForm
 from core.models import (
     UserProfile, EventOccasion, Category, GiftBox, BoxItem, CatalogAssignment,
     BoxConfiguration, BoxSelection, Order
@@ -119,6 +119,30 @@ class GlintPlatformTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Birthday Bliss')
 
+    def test_event_catalog_filters_preserve_selected_occasion(self):
+        second_box = GiftBox.objects.create(
+            name='Birthday Treat Box',
+            event=self.occasion,
+            base_price=Decimal('299.00'),
+        )
+        CatalogAssignment.objects.create(gift_box=second_box, box_item=self.item2)
+
+        response = self.client.get(
+            reverse('gift_boxes_by_event', args=[self.occasion.pk]),
+            {'category': 'Chocolates', 'sort': 'price_low', 'query': 'Birthday'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['current_occasion'], self.occasion)
+        self.assertEqual(response.context['selected_category'], 'Chocolates')
+        self.assertEqual(response.context['selected_sort'], 'price_low')
+        self.assertEqual(response.context['query'], 'Birthday')
+        self.assertEqual(list(response.context['gift_boxes']), [second_box, self.box])
+        self.assertContains(
+            response,
+            f'action="{reverse("gift_boxes_by_event", args=[self.occasion.pk])}"',
+        )
+
         # Search query
         response = self.client.get(reverse('search_gift_boxes') + '?query=Birthday')
         self.assertEqual(response.status_code, 200)
@@ -128,6 +152,20 @@ class GlintPlatformTests(TestCase):
         response = self.client.get(reverse('customizer_builder', args=[self.box.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Artisan Cake')
+
+    def test_shared_ambient_animation_is_rendered_on_main_site_pages(self):
+        for url in (
+            reverse('home'),
+            reverse('gift_boxes'),
+            reverse('cart'),
+            reverse('login'),
+            reverse('register'),
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'id="ambient-layer"')
+                self.assertContains(response, 'class="butterfly-flutter"')
 
     def test_guest_draft_can_be_saved_and_resumed(self):
         response = self.client.post(
@@ -375,6 +413,140 @@ class GlintPlatformTests(TestCase):
         user.refresh_from_db()
         self.assertTrue(user.is_active)
 
+    def test_registration_policy_links_open_information_pages(self):
+        response = self.client.get(reverse('register'))
+        self.assertContains(response, reverse('terms_of_service'))
+        self.assertContains(response, reverse('privacy_policy'))
+        self.assertContains(response, 'placeholder="Your full name"')
+        self.assertNotContains(response, 'e.g.')
+        self.assertContains(self.client.get(reverse('terms_of_service')), 'demonstration application')
+        self.assertContains(self.client.get(reverse('privacy_policy')), 'Passwords are handled')
+
+    def test_registration_validation_shows_errors_and_preserves_next(self):
+        protected_path = reverse('admin_products')
+        response = self.client.post(
+            reverse('register'),
+            {
+                'next': protected_path,
+                'full_name': 'Test Customer',
+                'email': 'invalid-email',
+                'password': 'weak',
+                'password_confirm': 'different',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['next'], protected_path)
+        self.assertContains(response, 'You must agree to the Terms')
+        self.assertContains(response, 'Enter a valid email address')
+        self.assertFalse(User.objects.filter(email='invalid-email').exists())
+
+    def test_checkout_form_rejects_invalid_phone_and_past_delivery_date(self):
+        form = CheckoutForm(data={
+            'full_name': 'Test Customer',
+            'email': 'test@example.com',
+            'phone': '123',
+            'shipping_address': '123 Rose Street',
+            'city': 'Bengaluru',
+            'state': 'Karnataka',
+            'postal_code': '560001',
+            'payment_method': 'card',
+            'delivery_date': (timezone.localdate() - timedelta(days=1)).isoformat(),
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('phone', form.errors)
+        self.assertIn('delivery_date', form.errors)
+
+    def test_invalid_profile_form_errors_are_visible_on_profile_tab(self):
+        self.client.login(username='testuser', password='Password123')
+        response = self.client.post(reverse('profile'), {
+            'full_name': 'Test Customer',
+            'email': self.user.email,
+            'phone': '123',
+            'address_line1': '123 Rose Street',
+            'city': 'Bengaluru',
+            'state': 'Karnataka',
+            'postal_code': '560001',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['active_tab'], 'account-tab')
+        self.assertContains(response, 'Phone number must be exactly 10 digits.')
+        self.assertContains(response, 'id="account-tab" role="tabpanel"')
+
+    def test_password_reset_handles_unknown_email_without_enumerating_accounts(self):
+        response = self.client.post(
+            reverse('forgot_password'),
+            {'email': 'unknown@example.com'},
+            follow=True,
+        )
+        self.assertEqual(response.redirect_chain[-1][0], reverse('forgot_password'))
+        self.assertContains(response, 'If an account exists')
+        self.assertNotContains(response, 'No registered account found')
+        self.assertNotIn('password_reset_otp', self.client.session)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_password_reset_otp_completes_password_change(self):
+        response = self.client.post(
+            reverse('forgot_password'),
+            {'email': self.user.email},
+        )
+        self.assertRedirects(response, reverse('reset_password_otp'))
+        self.assertEqual(len(mail.outbox), 1)
+
+        otp = self.client.session['password_reset_otp']
+        response = self.client.post(reverse('reset_password_otp'), {
+            'otp': otp,
+            'new_password': 'NewPassword123!',
+            'confirm_password': 'NewPassword123!',
+        })
+        self.assertRedirects(response, reverse('login'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('NewPassword123!'))
+        self.assertNotIn('password_reset_otp', self.client.session)
+
+    def test_password_reset_locks_otp_after_five_incorrect_attempts(self):
+        session = self.client.session
+        session['password_reset_otp'] = '123456'
+        session['password_reset_email'] = self.user.email
+        session['password_reset_otp_at'] = timezone.now().isoformat()
+        session['password_reset_attempts'] = 0
+        session.save()
+
+        for attempt in range(5):
+            response = self.client.post(reverse('reset_password_otp'), {
+                'otp': '000000',
+                'new_password': 'NewPassword123!',
+                'confirm_password': 'NewPassword123!',
+            })
+            if attempt < 4:
+                self.assertEqual(response.status_code, 200)
+            else:
+                self.assertRedirects(response, reverse('forgot_password'))
+
+        self.assertNotIn('password_reset_otp', self.client.session)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Password123'))
+
+    def test_failed_login_keeps_protected_destination_for_retry(self):
+        login_url = reverse('login') + '?next=' + reverse('admin_products')
+        response = self.client.post(login_url, {
+            'username_or_email': self.admin_user.username,
+            'password': 'WrongPassword!',
+            'next': reverse('admin_products'),
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['next'], reverse('admin_products'))
+        self.assertContains(response, f'value="{reverse("admin_products")}"')
+
+        response = self.client.post(reverse('login'), {
+            'username_or_email': self.admin_user.username,
+            'password': 'Password123',
+            'next': reverse('admin_products'),
+        })
+        self.assertRedirects(response, reverse('admin_products'))
+
     def test_payment_rejects_out_of_stock_items_without_creating_order(self):
         self.client.login(username='testuser', password='Password123')
         BoxConfiguration.objects.create(
@@ -429,6 +601,128 @@ class GlintPlatformTests(TestCase):
         response = self.client.get(reverse('admin_dashboard'))
         self.assertEqual(response.status_code, 200)
 
+    def test_admin_dashboard_charts_use_paid_revenue_in_selected_range(self):
+        current_order = Order.objects.create(
+            user=self.user,
+            contact_full_name='Test Customer',
+            contact_email='test@example.com',
+            contact_phone='9876543210',
+            ship_to_address='123 Rose Street',
+            tax_amount=Decimal('5.00'),
+            shipping_amount=Decimal('10.00'),
+            payment_status='paid',
+        )
+        old_order = Order.objects.create(
+            user=self.user,
+            contact_full_name='Old Customer',
+            contact_email='old@example.com',
+            contact_phone='9876543210',
+            ship_to_address='123 Rose Street',
+            tax_amount=Decimal('100.00'),
+            payment_status='paid',
+        )
+        Order.objects.filter(pk=old_order.pk).update(
+            created_at=timezone.now() - timedelta(days=60),
+        )
+        self.client.login(username='adminuser', password='Password123')
+
+        response = self.client.get(reverse('admin_dashboard'), {
+            'start_date': timezone.localdate().isoformat(),
+            'end_date': timezone.localdate().isoformat(),
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_revenue'], current_order.grand_total)
+        self.assertEqual(
+            json.loads(response.context['monthly_values_json']),
+            [float(current_order.grand_total)],
+        )
+        self.assertEqual(
+            json.loads(response.context['monthly_labels_json']),
+            [current_order.created_at.strftime('%b %Y')],
+        )
+
+    def test_admin_order_search_filters_real_customer_fields(self):
+        order = Order.objects.create(
+            user=self.user,
+            contact_full_name='Searchable Customer',
+            contact_email='searchable@example.com',
+            contact_phone='9876543210',
+            ship_to_address='123 Rose Street',
+        )
+        self.client.login(username='adminuser', password='Password123')
+
+        response = self.client.get(reverse('admin_orders'), {'q': 'searchable@example.com'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['orders']), [order])
+
+    def test_admin_can_create_edit_and_delete_boxes_and_items(self):
+        self.client.login(username='adminuser', password='Password123')
+
+        box_create_url = reverse('admin_box_create')
+        self.assertEqual(self.client.get(box_create_url).status_code, 200)
+        response = self.client.post(box_create_url, {
+            'name': 'Admin Created Box',
+            'event': str(self.occasion.pk),
+            'description': 'A test gift box',
+            'emoji': '🎁',
+            'base_price': '350.00',
+            'stock': '8',
+            'is_active': 'on',
+        })
+        self.assertRedirects(response, reverse('admin_products'))
+        box = GiftBox.objects.get(name='Admin Created Box')
+
+        box_edit_url = reverse('admin_box_edit', args=[box.pk])
+        self.assertEqual(self.client.get(box_edit_url).status_code, 200)
+        response = self.client.post(box_edit_url, {
+            'name': 'Admin Edited Box',
+            'event': str(self.occasion.pk),
+            'description': 'An updated test gift box',
+            'emoji': '🎁',
+            'base_price': '450.00',
+            'stock': '9',
+            'is_active': 'on',
+        })
+        self.assertRedirects(response, reverse('admin_products'))
+        box.refresh_from_db()
+        self.assertEqual(box.name, 'Admin Edited Box')
+        self.assertEqual(box.base_price, Decimal('450.00'))
+
+        item_create_url = reverse('admin_box_item_create')
+        self.assertEqual(self.client.get(item_create_url).status_code, 200)
+        item_payload = {
+            'name': 'Admin Created Item',
+            'description': 'A test customizable item',
+            'categories': 'Keepsakes',
+            'price': '75.00',
+            'stock': '15',
+            'is_active': 'on',
+            'gift_boxes': [str(box.pk)],
+            'default_for_boxes': [str(box.pk)],
+            'events': [str(self.occasion.pk)],
+        }
+        response = self.client.post(item_create_url, item_payload)
+        self.assertRedirects(response, reverse('admin_products'))
+        item = BoxItem.objects.get(name='Admin Created Item')
+
+        item_edit_url = reverse('admin_box_item_edit', args=[item.pk])
+        self.assertEqual(self.client.get(item_edit_url).status_code, 200)
+        item_payload.update({'name': 'Admin Edited Item', 'price': '85.00'})
+        response = self.client.post(item_edit_url, item_payload)
+        self.assertRedirects(response, reverse('admin_products'))
+        item.refresh_from_db()
+        self.assertEqual(item.name, 'Admin Edited Item')
+        self.assertEqual(item.price, Decimal('85.00'))
+
+        response = self.client.post(reverse('admin_box_item_delete', args=[item.pk]))
+        self.assertRedirects(response, reverse('admin_products'))
+        self.assertFalse(BoxItem.objects.filter(pk=item.pk).exists())
+        response = self.client.post(reverse('admin_box_delete', args=[box.pk]))
+        self.assertRedirects(response, reverse('admin_products'))
+        self.assertFalse(GiftBox.objects.filter(pk=box.pk).exists())
+
     def test_customer_order_history_can_filter_by_date_and_status(self):
         recent_order = Order.objects.create(
             user=self.user,
@@ -471,6 +765,61 @@ class GlintPlatformTests(TestCase):
         )
         self.assertTrue(BoxConfiguration.objects.filter(pk=draft.pk).exists())
 
+    def test_customer_can_rename_and_delete_saved_draft(self):
+        self.client.login(username='testuser', password='Password123')
+        draft = BoxConfiguration.objects.create(
+            user=self.user,
+            gift_box=self.box,
+            status=BoxConfiguration.DRAFT,
+            draft_name='Initial name',
+        )
+
+        response = self.client.post(
+            reverse('rename_draft', args=[draft.pk]),
+            {'draft_name': 'Updated name'},
+        )
+        self.assertRedirects(response, reverse('profile'))
+        draft.refresh_from_db()
+        self.assertEqual(draft.draft_name, 'Updated name')
+
+        response = self.client.post(reverse('delete_draft', args=[draft.pk]))
+        self.assertRedirects(response, reverse('profile'))
+        self.assertFalse(BoxConfiguration.objects.filter(pk=draft.pk).exists())
+
+    def test_guest_can_update_and_remove_cart_item(self):
+        self.client.get(reverse('cart'))
+        cart_item = BoxConfiguration.objects.create(
+            session_key=self.client.session.session_key,
+            gift_box=self.box,
+            status=BoxConfiguration.CART,
+            personalization_name='For a friend',
+        )
+        BoxSelection.objects.create(
+            configuration=cart_item,
+            box_item=self.item1,
+            item_name_at_order=self.item1.name,
+            quantity=1,
+            unit_price_at_order=self.item1.price,
+        )
+
+        response = self.client.post(
+            reverse('update_cart_quantity', args=[cart_item.pk, 'increase']),
+        )
+        self.assertRedirects(response, reverse('cart'))
+        cart_item.refresh_from_db()
+        self.assertEqual(cart_item.quantity, 2)
+
+        response = self.client.post(
+            reverse('update_cart_quantity', args=[cart_item.pk, 'decrease']),
+        )
+        self.assertRedirects(response, reverse('cart'))
+        cart_item.refresh_from_db()
+        self.assertEqual(cart_item.quantity, 1)
+
+        response = self.client.post(reverse('remove_from_cart', args=[cart_item.pk]))
+        self.assertRedirects(response, reverse('cart'))
+        self.assertFalse(BoxConfiguration.objects.filter(pk=cart_item.pk).exists())
+
     def test_draft_cleanup_removes_only_drafts_older_than_30_days(self):
         stale_draft = BoxConfiguration.objects.create(
             user=self.user,
@@ -497,6 +846,13 @@ class GlintPlatformTests(TestCase):
             contact_phone='9876543210',
             ship_to_address='123 Rose Street',
         )
+        BoxConfiguration.objects.create(
+            order=order,
+            gift_box=self.box,
+            status=BoxConfiguration.ORDERED,
+            personalization_name='Gift Recipient',
+            special_instructions='Handle with care',
+        )
         self.client.login(username='adminuser', password='Password123')
         url = reverse('admin_order_detail', args=[order.order_number])
 
@@ -515,6 +871,13 @@ class GlintPlatformTests(TestCase):
         self.assertTrue(
             LogEntry.objects.filter(user=self.admin_user, object_repr__contains=order.order_number).exists()
         )
+        packing_slip = self.client.get(
+            reverse('admin_packing_slip', args=[order.order_number])
+        )
+        self.assertEqual(packing_slip.status_code, 200)
+        self.assertContains(packing_slip, '2026-12-25')
+        self.assertContains(packing_slip, 'Handle with care')
+        self.assertContains(packing_slip, 'Packed with care')
 
         response = self.client.post(url, {
             'order_status': 'unknown',
@@ -526,3 +889,96 @@ class GlintPlatformTests(TestCase):
         self.assertEqual(response.status_code, 200)
         order.refresh_from_db()
         self.assertEqual(order.order_status, 'shipped')
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_tracking_only_update_emails_customer_and_is_shown_on_invoice(self):
+        order = Order.objects.create(
+            user=self.user,
+            contact_full_name='Test Customer',
+            contact_email='test@example.com',
+            contact_phone='9876543210',
+            ship_to_address='123 Rose Street',
+            order_status='shipped',
+            payment_status='paid',
+        )
+        self.client.login(username='adminuser', password='Password123')
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse('admin_order_detail', args=[order.order_number]),
+                {
+                    'order_status': 'shipped',
+                    'payment_status': 'paid',
+                    'tracking_number': 'COURIER-456',
+                    'internal_notes': '',
+                    'delivery_date': '',
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('COURIER-456', mail.outbox[0].body)
+
+        self.client.login(username='testuser', password='Password123')
+        response = self.client.get(reverse('order_detail', args=[order.order_number]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'COURIER-456')
+        self.assertContains(response, 'Order Invoice')
+        self.assertContains(response, '@media print')
+
+    def test_customer_can_download_order_invoice_as_pdf(self):
+        order = Order.objects.create(
+            user=self.user,
+            contact_full_name='Test Customer',
+            contact_email='test@example.com',
+            contact_phone='9876543210',
+            ship_to_address='123 Rose Street',
+            ship_to_city='Bengaluru',
+            ship_to_state='Karnataka',
+            ship_to_postal_code='560001',
+            tax_amount=Decimal('34.90'),
+            shipping_amount=Decimal('0.00'),
+            order_status='paid',
+            payment_status='paid',
+        )
+        configuration = BoxConfiguration.objects.create(
+            order=order,
+            gift_box=self.box,
+            status=BoxConfiguration.ORDERED,
+            personalization_name='Gift Recipient',
+            personalization_message='Happy Birthday',
+            quantity=1,
+            unit_price_at_order=Decimal('698.00'),
+        )
+        BoxSelection.objects.create(
+            configuration=configuration,
+            box_item=self.item1,
+            item_name_at_order=self.item1.name,
+            unit_price_at_order=self.item1.price,
+            quantity=1,
+        )
+        self.client.login(username='testuser', password='Password123')
+
+        response = self.client.get(reverse('order_invoice_pdf', args=[order.order_number]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn(
+            f'attachment; filename="invoice-{order.order_number}.pdf"',
+            response['Content-Disposition'],
+        )
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+
+        detail_response = self.client.get(reverse('order_detail', args=[order.order_number]))
+        self.assertContains(
+            detail_response,
+            reverse('order_invoice_pdf', args=[order.order_number]),
+        )
+
+        other_user = User.objects.create_user(
+            username='othercustomer',
+            email='other@example.com',
+            password='Password123',
+        )
+        self.client.login(username=other_user.username, password='Password123')
+        unauthorized_response = self.client.get(
+            reverse('order_invoice_pdf', args=[order.order_number]),
+        )
+        self.assertRedirects(unauthorized_response, reverse('profile'))
