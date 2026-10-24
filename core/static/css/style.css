@@ -195,6 +195,11 @@ p { margin: 0; }
     transform: translateY(-1px);
 }
 
+.navbar .dropdown-toggle:hover,
+.navbar .dropdown-toggle:focus {
+    transform: none;
+}
+
 .cta-link {
     background: linear-gradient(135deg, var(--rose-500), var(--lavender-500));
     color: #fff !important;
