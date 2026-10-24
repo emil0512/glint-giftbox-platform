@@ -666,6 +666,12 @@ class GlintPlatformTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="glint-body admin-body"')
         self.assertContains(response, 'class="container-fluid py-4 px-md-5 admin-portal"')
+        self.assertContains(response, 'GLINT <span class="small">ADMIN</span>')
+        self.assertContains(response, 'href="/admin-portal/products/"')
+        self.assertContains(response, 'action="/logout/"')
+        self.assertNotContains(response, 'href="/cart/"')
+        self.assertNotContains(response, 'href="/gift-boxes/"')
+        self.assertNotContains(response, '>Occasions<')
 
         response = self.client.get(reverse('admin_products'))
         self.assertEqual(response.status_code, 200)

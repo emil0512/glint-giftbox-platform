@@ -289,8 +289,42 @@ p { margin: 0; }
 }
 
 .admin-body .page-shell {
+    width: 100%;
     max-width: none;
+    margin: 0 !important;
+    padding: 0;
     background: transparent;
+}
+
+.admin-body .admin-navbar .container-fluid {
+    min-height: 56px;
+}
+
+.admin-body .admin-navbar .navbar-brand span {
+    color: var(--admin-muted);
+    font-family: var(--font-body);
+    letter-spacing: 0.16em;
+}
+
+.admin-body .admin-user-label {
+    color: var(--admin-muted);
+    white-space: nowrap;
+}
+
+.admin-body .admin-logout {
+    color: var(--admin-cyan);
+    background: rgba(66, 232, 220, 0.07);
+    border: 1px solid var(--admin-border);
+}
+
+.admin-body .admin-logout:hover {
+    color: #061316;
+    background: var(--admin-cyan);
+}
+
+.admin-body .admin-footer-status {
+    margin-left: 0.75rem;
+    color: var(--admin-cyan);
 }
 
 .admin-portal {

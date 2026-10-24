@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block body_class %}admin-body{% endblock %}
+
+{% block ambient_background %}{% endblock %}
+
+{% block site_navigation %}
+<nav class="navbar navbar-expand-lg sticky-top admin-navbar">
+    <div class="container-fluid px-md-5">
+        <a class="navbar-brand" href="{% url 'admin_dashboard' %}">
+            <i class="fa-solid fa-terminal me-2"></i> GLINT <span class="small">ADMIN</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle admin navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_products' %}">
+                        <i class="fa-solid fa-boxes-stacked me-1"></i> Products & Stock
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_orders' %}">
+                        <i class="fa-solid fa-clipboard-list me-1"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_export_orders' %}">
+                        <i class="fa-solid fa-file-csv me-1"></i> Export
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/django-admin/" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Django Admin
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center gap-3">
+                <span class="small admin-user-label">
+                    <i class="fa-solid fa-user-shield me-1"></i> {{ user.get_short_name|default:user.username }}
+                </span>
+                <form method="POST" action="{% url 'logout' %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm admin-logout">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block page_footer %}
+<footer class="footer mt-auto py-3 text-center">
+    <div class="container-fluid">
+        <span class="small">GLINT ADMIN CONSOLE <span class="admin-footer-status">● SYSTEM ONLINE</span></span>
+    </div>
+</footer>
+{% endblock %}
