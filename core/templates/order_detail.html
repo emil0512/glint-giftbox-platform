@@ -62,7 +62,7 @@
                 </div>
                 <div class="{% if order.payment_status == 'paid' %}text-success fw-bold{% else %}text-muted{% endif %} small">
                     <div class="fs-4">💳</div>
-                    {% if order.payment_method == 'cod' %}Payment due on delivery{% elif order.payment_status == 'paid' %}Demo payment approved (no charge){% else %}Payment {{ order.get_payment_status_display }}{% endif %}
+                    {% if order.payment_method == 'cod' %}Payment due on delivery{% elif order.payment_status == 'paid' %}Test payment completed — no charge{% else %}Payment {{ order.get_payment_status_display }}{% endif %}
                 </div>
                 <div class="{% if order.order_status == 'paid' or order.order_status == 'shipped' or order.order_status == 'completed' %}text-success fw-bold{% else %}text-muted{% endif %} small">
                     <div class="fs-4">🎁</div>
@@ -166,7 +166,7 @@
                     <span>Grand Total:</span>
                     <span class="text-primary">₹{{ order.grand_total }}</span>
                 </div>
-                <small class="text-muted d-block text-end mt-1">{{ order.get_payment_status_display }} via {{ order.get_payment_method_display }} — no real payment is collected.</small>
+                <small class="text-muted d-block text-end mt-1">{{ order.get_payment_status_display }} via {{ order.get_payment_method_display }}{% if order.payment_method != 'cod' %} — test mode; no real payment is collected{% endif %}.</small>
             </div>
         </div>
 

@@ -444,14 +444,6 @@ class CheckoutForm(forms.Form):
         return delivery_date
 
 
-class PaymentSimulationForm(forms.Form):
-    result = forms.ChoiceField(
-        choices=[('approved', 'Simulate successful payment'), ('declined', 'Simulate declined payment')],
-        widget=forms.RadioSelect(attrs={'class': 'payment-radio'}),
-        initial='approved',
-    )
-
-
 class GiftBoxForm(forms.ModelForm):
     class Meta:
         model = GiftBox

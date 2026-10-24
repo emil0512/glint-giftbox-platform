@@ -42,7 +42,6 @@ from .forms import (
     RegisterForm, LoginForm, ProfileForm, CheckoutForm, AdminOrderUpdateForm,
     GiftBoxForm, BoxItemForm,
     ForgotPasswordRequestForm, VerifyOtpAndResetPasswordForm,
-    PaymentSimulationForm,
     validate_strict_password,
 )
 
@@ -114,12 +113,12 @@ def send_order_confirmation_email(order):
             subject=f'Order Confirmation - {order.order_number}',
             message=(
                 f'Dear {order.full_name},\n\n'
-                f'Your demo order #{order.order_number} has been placed.\n'
+                    f'Your order #{order.order_number} has been placed.\n'
                 f'Order total: Rs.{order.grand_total}\n'
                 f'Items:\n' + '\n'.join(item_lines) + '\n'
                 f'Delivery address: {order.shipping_address}, {order.city}, '
                 f'{order.state} - {order.postal_code}\n\n'
-                'This application simulates payment and did not charge you.\n'
+                'This checkout is in test mode; no payment was collected.\n'
                 'Glint Gift Team'
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,
@@ -1131,8 +1130,7 @@ def checkout(request):
     if request.method == 'POST':
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            # Store validated checkout details in session for payment gateway
-            request.session['checkout_data'] = {
+            checkout_data = {
                 'full_name': form.cleaned_data['full_name'],
                 'email': form.cleaned_data['email'],
                 'phone': form.cleaned_data['phone'],
@@ -1145,12 +1143,8 @@ def checkout(request):
                     form.cleaned_data['delivery_date'].isoformat()
                     if form.cleaned_data['delivery_date'] else ''
                 ),
-                'subtotal': str(subtotal),
-                'tax_amount': str(tax_amount),
-                'shipping_amount': str(shipping_amount),
-                'grand_total': str(grand_total),
             }
-            return redirect('payment')
+            return _complete_checkout(request, checkout_data)
     else:
         form = CheckoutForm(initial=initial_data)
 
@@ -1164,39 +1158,10 @@ def checkout(request):
     })
 
 
-@login_required
-def payment_gateway_view(request):
-    checkout_data = request.session.get('checkout_data')
-    if not checkout_data:
-        messages.error(request, 'Session expired. Please proceed through checkout again.')
-        return redirect('checkout')
-
-    cart_items = BoxConfiguration.objects.filter(
-        user=request.user, status=BoxConfiguration.CART,
-    ).select_related('gift_box').prefetch_related('selections')
-    if not cart_items.exists():
-        messages.warning(request, 'Your cart is empty.')
-        return redirect('gift_boxes')
-
+def _complete_checkout(request, checkout_data):
     payment_method = checkout_data.get('payment_method', 'card')
-    subtotal = sum((item.get_total_price() for item in cart_items), Decimal('0.00'))
-    tax_amount = (subtotal * settings.TAX_RATE).quantize(Decimal('0.01'))
-    shipping_amount = (
-        Decimal('0.00') if subtotal >= settings.FREE_SHIPPING_THRESHOLD
-        else settings.FLAT_SHIPPING_FEE
-    )
-    grand_total = subtotal + tax_amount + shipping_amount
-    payment_form = PaymentSimulationForm(
-        request.POST if request.method == 'POST' else None,
-    )
-
-    if request.method == 'POST' and payment_form.is_valid():
-        if payment_form.cleaned_data['result'] == 'declined':
-            messages.error(request, 'The demo payment was declined; no order or charge was created.')
-            return redirect('payment')
-
-        try:
-            with transaction.atomic():
+    try:
+        with transaction.atomic():
                 locked_items = list(
                     BoxConfiguration.objects.select_for_update()
                     .filter(user=request.user, status=BoxConfiguration.CART)
@@ -1316,28 +1281,21 @@ def payment_gateway_view(request):
                 profile.postal_code = checkout_data['postal_code']
                 profile.save()
 
-            request.session.pop('checkout_data', None)
-            messages.success(request, f'Demo order #{order.order_number} has been placed.')
-            if not send_order_confirmation_email(order):
-                messages.warning(
-                    request,
-                    'The order was placed, but its confirmation email could not be sent. Please save the order number.',
-                )
-            return redirect('order_confirmation', order_number=order.order_number)
-        except ValidationError as error:
-            messages.error(request, ' '.join(error.messages))
-            return redirect('cart')
-        except Exception:
-            logger.exception('Order placement failed user_id=%s', request.user.pk)
-            messages.error(request, 'We could not place your order. Please try again.')
-            return redirect('payment')
-
-    return render(request, 'payment.html', {
-        'checkout_data': checkout_data,
-        'grand_total': grand_total,
-        'payment_method': payment_method,
-        'payment_form': payment_form,
-    })
+        request.session.pop('checkout_data', None)
+        messages.success(request, f'Order #{order.order_number} has been placed.')
+        if not send_order_confirmation_email(order):
+            messages.warning(
+                request,
+                'The order was placed, but its confirmation email could not be sent. Please save the order number.',
+            )
+        return redirect('order_confirmation', order_number=order.order_number)
+    except ValidationError as error:
+        messages.error(request, ' '.join(error.messages))
+        return redirect('cart')
+    except Exception:
+        logger.exception('Order placement failed user_id=%s', request.user.pk)
+        messages.error(request, 'We could not place your order. Please try again.')
+        return redirect('checkout')
 
 
 @login_required
@@ -1547,7 +1505,7 @@ def order_invoice_pdf(request, order_number):
         Spacer(1, 8 * mm),
         Paragraph(
             'Thank you for ordering with GLINT. This application simulates '
-            'payment; no real payment was collected.',
+            'Checkout is in test mode; no real payment was collected.',
             styles['InvoiceSmall'],
         ),
     ])
@@ -1571,7 +1529,7 @@ def cancel_customer_order(request, order_number):
             order.payment_status = 'refunded' if order.payment_status == 'paid' else 'pending'
             order.save(update_fields=['order_status', 'payment_status'])
             transaction.on_commit(lambda: send_order_status_email(order, old_status))
-            messages.success(request, f'Order #{order.order_number} has been cancelled. Demo payments are not charged.')
+            messages.success(request, f'Order #{order.order_number} has been cancelled.')
         else:
             messages.error(request, f'Order cannot be cancelled because its current status is {order.get_order_status_display()}.')
     return redirect('profile')

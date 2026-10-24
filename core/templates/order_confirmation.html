@@ -25,7 +25,7 @@
                         <div class="p-3 bg-white rounded-3 border h-100">
                             <span class="fs-4 text-primary d-block mb-2">1️⃣</span>
                             <h6 class="fw-bold mb-1">Order Received</h6>
-                            <p class="small text-muted mb-0">Confirmation sent to <b>{{ order.email }}</b></p>
+                            <p class="small text-muted mb-0">Order contact: <b>{{ order.email }}</b></p>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -82,9 +82,12 @@
                     </div>
                     <hr>
                     <div class="d-flex justify-content-between fw-bold fs-5 text-dark">
-                        <span>Total Paid:</span>
+                        <span>Order Total:</span>
                         <span class="text-primary">₹{{ order.grand_total }}</span>
                     </div>
+                    {% if order.payment_method != 'cod' %}
+                        <p class="small text-muted mt-2 mb-0">Checkout is in test mode. No real payment was collected.</p>
+                    {% endif %}
                 </div>
 
                 <!-- Action Buttons -->

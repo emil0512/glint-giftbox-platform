@@ -23,7 +23,6 @@ urlpatterns = [
 
     # Checkout & Payment
     path('checkout/', views.checkout, name='checkout'),
-    path('payment/', views.payment_gateway_view, name='payment'),
     path('order-confirmation/<str:order_number>/', views.order_confirmation_view, name='order_confirmation'),
 
     # Customer Profile & Orders

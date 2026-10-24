@@ -272,7 +272,7 @@ class Order(models.Model):
     ]
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('paid', 'Simulated (no charge)'),
+        ('paid', 'Test payment completed (no charge)'),
         ('failed', 'Failed'),
         ('refunded', 'Refunded'),
     ]

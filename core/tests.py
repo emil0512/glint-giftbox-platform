@@ -341,22 +341,17 @@ class GlintPlatformTests(TestCase):
         }
         response = self.client.post(reverse('checkout'), data=checkout_payload)
         self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, reverse('payment'))
-
-        response = self.client.post(reverse('payment'), data={'result': 'declined'})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(Order.objects.count(), 0)
-        self.assertEqual(self.box.stock, initial_stock)
-
-        response = self.client.post(reverse('payment'), data={'result': 'approved'})
-        self.assertEqual(response.status_code, 302)
+        order = Order.objects.get()
+        self.assertRedirects(
+            response,
+            reverse('order_confirmation', args=[order.order_number]),
+        )
 
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(
             BoxConfiguration.objects.filter(status=BoxConfiguration.CART).count(), 0,
         )
 
-        order = Order.objects.first()
         self.assertTrue(order.order_number.startswith('GLINT-'))
         self.assertEqual(order.user, self.user)
         self.assertEqual(order.delivery_date, timezone.localdate() + timedelta(days=1))
@@ -634,7 +629,7 @@ class GlintPlatformTests(TestCase):
         )
         self.item1.stock = 0
         self.item1.save(update_fields=['stock'])
-        self.client.post(reverse('checkout'), {
+        response = self.client.post(reverse('checkout'), {
             'full_name': 'Test Customer',
             'email': 'test@example.com',
             'phone': '9876543210',
@@ -644,7 +639,6 @@ class GlintPlatformTests(TestCase):
             'postal_code': '560001',
             'payment_method': 'card',
         })
-        response = self.client.post(reverse('payment'), {'result': 'approved'})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Order.objects.count(), 0)
         self.assertTrue(BoxConfiguration.objects.filter(status=BoxConfiguration.CART).exists())
