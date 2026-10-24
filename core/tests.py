@@ -664,6 +664,12 @@ class GlintPlatformTests(TestCase):
         self.client.login(username='adminuser', password='Password123')
         response = self.client.get(reverse('admin_dashboard'))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="glint-body admin-body"')
+        self.assertContains(response, 'class="container-fluid py-4 px-md-5 admin-portal"')
+
+        response = self.client.get(reverse('admin_products'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="glint-body admin-body"')
 
     def test_admin_dashboard_charts_use_paid_revenue_in_selected_range(self):
         current_order = Order.objects.create(

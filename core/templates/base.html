@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="glint-body">
+<body class="glint-body {% block body_class %}{% endblock %}">
     {% include 'ambient_motion.html' %}
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
