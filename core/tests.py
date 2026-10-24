@@ -24,7 +24,10 @@ class GlintPlatformTests(TestCase):
     def setUp(self):
         self.client = Client(SERVER_NAME='127.0.0.1')
 
-        self.occasion = EventOccasion.objects.create(name='Birthday')
+        self.occasion, _ = EventOccasion.objects.get_or_create(
+            name='Birthday',
+            defaults={'is_active': True},
+        )
 
         self.box = GiftBox.objects.create(
             name='Birthday Bliss',
@@ -73,6 +76,8 @@ class GlintPlatformTests(TestCase):
     def test_home_page_renders_successfully(self):
         response = self.client.get(reverse('home'))
         self.assertContains(response, 'GLINT')
+        self.assertContains(response, 'data-bs-toggle="dropdown"')
+        self.assertContains(response, reverse('gift_boxes_by_event', args=[self.occasion.pk]))
         self.assertEqual(len(list(apps.get_app_config('core').get_models())), 9)
         core_tables = [
             table for table in connection.introspection.table_names()
